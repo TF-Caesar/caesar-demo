@@ -4,7 +4,7 @@ export default function VerifierPage() {
   return (
     <main className="mx-auto w-full max-w-frame px-6">
       <section className="mx-auto max-w-measure pt-16 sm:pt-24">
-        <span className="inline-flex items-center gap-2 rounded-pill bg-surface px-3 py-1 text-[12px] text-ink-2">
+        <span className="inline-flex items-center gap-2 rounded-pill bg-sage-tint px-3 py-1 text-[12px] font-medium text-sage-deep">
           <span className="h-1.5 w-1.5 rounded-full bg-sage" aria-hidden="true" />
           Live sources, captured with a timestamp
         </span>

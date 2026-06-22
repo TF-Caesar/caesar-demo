@@ -20,7 +20,7 @@ export function Nav() {
 
       <div className="ml-auto flex items-center gap-4 sm:gap-5">
         <Link href="/verifier" className={NAV_LINK}>Verifier</Link>
-        <Link href="/deep-research" className={NAV_LINK}>Deep research</Link>
+        <Link href="/research" className={NAV_LINK}>Research</Link>
         <Link href="/monitor" className={NAV_LINK}>Monitor</Link>
         <a
           href="https://github.com/TF-Caesar"

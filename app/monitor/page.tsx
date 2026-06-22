@@ -4,8 +4,8 @@ export default function MonitorPage() {
   return (
     <main className="mx-auto w-full max-w-frame px-6">
       <section className="mx-auto max-w-measure pt-16 sm:pt-24">
-        <span className="inline-flex items-center gap-2 rounded-pill bg-surface px-3 py-1 text-[12px] text-ink-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-sage" aria-hidden="true" />
+        <span className="inline-flex items-center gap-2 rounded-pill bg-coral-tint px-3 py-1 text-[12px] font-medium text-coral-deep">
+          <span className="h-1.5 w-1.5 rounded-full bg-coral" aria-hidden="true" />
           Freshest captures, newest first
         </span>
 

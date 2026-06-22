@@ -49,7 +49,7 @@ export function MonitorPanel() {
           disabled={loading || !topic.trim()}
           className="inline-flex shrink-0 items-center justify-center gap-2 rounded-pill bg-ink px-5 py-2.5 text-[13px] font-medium text-paper transition-colors duration-editorial ease-editorial hover:bg-ink-mark disabled:cursor-not-allowed disabled:opacity-45"
         >
-          {loading && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-sage" aria-hidden="true" />}
+          {loading && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-coral" aria-hidden="true" />}
           {loading ? 'Scanning…' : 'Scan'}
         </button>
       </div>
@@ -60,7 +60,7 @@ export function MonitorPanel() {
             key={c}
             onClick={() => { setTopic(c); run(c); }}
             disabled={loading}
-            className="rounded-pill border border-hairline bg-surface px-3.5 py-2 text-[13px] text-ink-2 transition-colors duration-editorial ease-editorial hover:border-bone hover:text-ink disabled:opacity-50"
+            className="rounded-pill border border-hairline bg-surface px-3.5 py-2 text-[13px] text-ink-2 transition-colors duration-editorial ease-editorial hover:border-coral hover:text-coral-deep disabled:opacity-50"
           >
             {c}
           </button>
@@ -69,7 +69,7 @@ export function MonitorPanel() {
 
       {data?.degraded && (
         <div className="mt-7 inline-flex items-center gap-2 rounded-pill bg-surface px-3 py-1.5 text-[12px] text-ink-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-sage" aria-hidden="true" />
+          <span className="h-1.5 w-1.5 rounded-full bg-coral" aria-hidden="true" />
           Showing a cached example — the free tier is busy right now.
         </div>
       )}
@@ -81,7 +81,7 @@ export function MonitorPanel() {
             return (
               <article
                 key={item.url}
-                className="cv-rise rounded-card border border-bone bg-paper p-5 transition-colors duration-editorial ease-editorial hover:bg-surface"
+                className="cv-rise rounded-card border border-bone border-l-2 border-l-coral bg-paper p-5 transition-colors duration-editorial ease-editorial hover:bg-surface"
                 style={{ animationDelay: `${i * 60}ms` }}
               >
                 <a

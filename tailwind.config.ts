@@ -13,6 +13,7 @@ export default {
         ink: { DEFAULT: 'var(--ink)', mark: 'var(--ink-mark)', 2: 'var(--ink-2)' },
         sage: { DEFAULT: 'var(--sage)', tint: 'var(--sage-tint)', deep: 'var(--sage-deep)' },
         coral: { DEFAULT: 'var(--coral)', tint: 'var(--coral-tint)', deep: 'var(--coral-deep)' },
+        lilac: { DEFAULT: 'var(--lilac)', tint: 'var(--lilac-tint)', deep: 'var(--lilac-deep)' },
         clay: { DEFAULT: 'var(--clay)', tint: 'var(--clay-tint)', deep: 'var(--clay-deep)' },
       },
       fontFamily: {

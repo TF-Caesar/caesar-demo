@@ -7,7 +7,7 @@ Free. No signup. No API key. Powered by Caesar search.
 ## The three demos
 
 - **Verifier** — `/verifier` — paste a claim, a paragraph, or a URL; every factual claim is checked against live sources and shown with the exact captured passage and a timestamp.
-- **Deep Research** — `/deep-research` — ask anything and get a short briefing: the extracted facts, then a numbered, dated list of where each one came from.
+- **Research** — `/research` — ask anything and get a short briefing: the extracted facts, then a numbered, dated list of where each one came from.
 - **Monitor** — `/monitor` — name a topic and see the freshest captured items, newest first — a freshness radar for what's new right now.
 
 The hub lives at `/` and links to all three.

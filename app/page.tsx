@@ -6,7 +6,7 @@ function CaesarMark() {
   return <img src="/favicon.svg" alt="" aria-hidden="true" width={40} height={40} className="block" />;
 }
 
-type Demo = { href: string; name: string; description: string; sample: string };
+type Demo = { href: string; name: string; description: string; sample: string; dot: string; arrow: string; hover: string };
 
 const DEMOS: Demo[] = [
   {
@@ -14,18 +14,21 @@ const DEMOS: Demo[] = [
     name: 'Verifier',
     description: 'Check any claim against live sources, with the captured passage and timestamp.',
     sample: 'The National Ignition Facility achieved fusion ignition in 2022.',
+    dot: 'bg-sage', arrow: 'text-sage', hover: 'hover:border-sage hover:bg-sage-tint',
   },
   {
-    href: '/deep-research',
-    name: 'Deep Research',
+    href: '/research',
+    name: 'Research',
     description: 'Ask anything and get a briefing — extracted facts plus a numbered, dated source list.',
     sample: 'State of fusion energy 2026',
+    dot: 'bg-lilac', arrow: 'text-lilac', hover: 'hover:border-lilac hover:bg-lilac-tint',
   },
   {
     href: '/monitor',
     name: 'Monitor',
     description: 'Scan a topic and see the freshest captured items, newest first.',
     sample: 'OpenAI model releases',
+    dot: 'bg-coral', arrow: 'text-coral', hover: 'hover:border-coral hover:bg-coral-tint',
   },
 ];
 
@@ -60,14 +63,17 @@ export default function Hub() {
             <Link
               key={d.href}
               href={d.href}
-              className="group cv-rise block rounded-card border border-bone bg-paper p-6 transition-colors duration-editorial ease-editorial hover:bg-surface"
+              className={`group cv-rise block rounded-card border border-bone bg-paper p-6 transition-colors duration-editorial ease-editorial ${d.hover}`}
               style={{ animationDelay: `${i * 60}ms` }}
             >
               <div className="flex items-center justify-between">
-                <span className="font-display text-[1.25rem] text-ink-mark">{d.name}</span>
+                <span className="flex items-center gap-2.5">
+                  <span aria-hidden="true" className={`h-2.5 w-2.5 rounded-full ${d.dot}`} />
+                  <span className="font-display text-[1.25rem] text-ink-mark">{d.name}</span>
+                </span>
                 <span
                   aria-hidden="true"
-                  className="text-ink-2 transition-colors duration-editorial ease-editorial group-hover:text-ink"
+                  className={`text-[1.1rem] ${d.arrow} transition-transform duration-editorial ease-editorial group-hover:translate-x-0.5`}
                 >
                   →
                 </span>

@@ -49,7 +49,7 @@ export function ResearchPanel() {
           disabled={loading || !input.trim()}
           className="inline-flex items-center gap-2 rounded-pill bg-ink px-5 py-2.5 text-[13px] font-medium text-paper transition-colors duration-editorial ease-editorial hover:bg-ink-mark disabled:cursor-not-allowed disabled:opacity-45"
         >
-          {loading && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-sage" aria-hidden="true" />}
+          {loading && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-lilac" aria-hidden="true" />}
           {loading ? 'Researching…' : 'Research'}
         </button>
 
@@ -58,7 +58,7 @@ export function ResearchPanel() {
             key={ex}
             onClick={() => { setInput(ex); run(ex); }}
             disabled={loading}
-            className="rounded-pill border border-hairline bg-surface px-3.5 py-2 text-[13px] text-ink-2 transition-colors duration-editorial ease-editorial hover:border-bone hover:text-ink disabled:opacity-50"
+            className="rounded-pill border border-hairline bg-surface px-3.5 py-2 text-[13px] text-ink-2 transition-colors duration-editorial ease-editorial hover:border-lilac hover:text-lilac-deep disabled:opacity-50"
           >
             {ex}
           </button>
@@ -67,7 +67,7 @@ export function ResearchPanel() {
 
       {data?.degraded && (
         <div className="mt-7 inline-flex items-center gap-2 rounded-pill bg-surface px-3 py-1.5 text-[12px] text-ink-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-sage" aria-hidden="true" />
+          <span className="h-1.5 w-1.5 rounded-full bg-lilac" aria-hidden="true" />
           Showing a cached example — the free tier is busy right now.
         </div>
       )}
@@ -80,7 +80,7 @@ export function ResearchPanel() {
               <ul className="mt-3 space-y-2.5">
                 {data.summary.map((s, i) => (
                   <li key={i} className="flex gap-2.5 text-[15px] leading-relaxed text-ink-2">
-                    <span aria-hidden="true" className="mt-[0.55em] h-1.5 w-1.5 shrink-0 rounded-full bg-sage" />
+                    <span aria-hidden="true" className="mt-[0.55em] h-1.5 w-1.5 shrink-0 rounded-full bg-lilac" />
                     <span>{s}</span>
                   </li>
                 ))}
@@ -96,7 +96,7 @@ export function ResearchPanel() {
                   const captured = formatCapture(src.capturedISO);
                   return (
                     <li key={src.index} className="flex gap-3 text-[13px]">
-                      <span className="font-mono text-ink-2/80">{src.index}.</span>
+                      <span className="font-mono text-lilac-deep">{src.index}.</span>
                       <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <a
                           href={src.url}
