@@ -1,0 +1,11 @@
+*.log
+*.tsbuildinfo
+.DS_Store
+.env
+.env.local
+.fly
+.next
+dist
+next-env.d.ts
+node_modules
+out
