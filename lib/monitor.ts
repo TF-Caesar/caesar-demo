@@ -32,7 +32,10 @@ export async function runFreshnessScan(
     const items: FreshnessItem[] = [];
     for (const c of citations) {
       const url = c.canonicalUrl;
-      if (!url || seen.has(url)) continue;
+      // searchAndRead emits a citation per search hit but reads only readTopN.
+      // A freshness radar must show only items we actually READ and captured —
+      // never an unread search-only hit with no capture moment.
+      if (!url || !c.captureTime || seen.has(url)) continue;
       seen.add(url);
       items.push({ title: (c.title || url || 'Untitled').trim(), url, captureTime: c.captureTime });
     }
