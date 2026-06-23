@@ -12,6 +12,15 @@ describe('isSubjective', () => {
     expect(isSubjective('Mount Everest is the tallest mountain on Earth')).toBe(false);
     expect(isSubjective('The 2022 FIFA World Cup was held in Qatar')).toBe(false);
   });
+  it('does not flag brand/proper-noun names or measurable compounds that contain a comparative word', () => {
+    expect(isSubjective('Best Buy reported $46.3 billion in revenue in 2024')).toBe(false);
+    expect(isSubjective('Tesla was the best-selling EV brand in 2023')).toBe(false);
+    expect(isSubjective('The Best Picture winner in 2020 was Parasite')).toBe(false);
+  });
+  it('still flags a genuine "the best/worst" opinion', () => {
+    expect(isSubjective('VS Code is the best editor')).toBe(true);
+    expect(isSubjective('That sequel was the worst movie of the year')).toBe(true);
+  });
 });
 
 describe('claimNumbers', () => {

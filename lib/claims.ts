@@ -1,5 +1,12 @@
 export interface ExtractOptions { llmKey?: string; maxClaims?: number; }
 
+/** True only when the whole input is a single bare http(s) URL (no surrounding prose). */
+export function isUrl(text: string): boolean {
+  const t = text.trim();
+  if (!t || /\s/.test(t)) return false;
+  return /^https?:\/\/\S+$/i.test(t);
+}
+
 // Split on sentence-ending punctuation + space. Lookahead allows a lowercase
 // next-sentence start so poorly-capitalized fluff (".. 2025. nice.") still splits.
 const SENTENCE_SPLIT = /(?<=[.!?])\s+(?=[A-Za-z0-9"'])/;

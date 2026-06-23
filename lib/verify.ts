@@ -25,11 +25,26 @@ export function claimAcronyms(claim: string): string[] {
  * Subjective / comparative claims are opinions, not checkable facts. "X is
  * better than Y" and "Y is better than X" can't both be VERIFIED off the same
  * tweet — so we never verify them; runVerification labels them OPINION.
- * (Measurable superlatives like "tallest/largest/fastest" are NOT flagged.)
+ *
+ * We match comparative STRUCTURE, not bare words, so factual claims that merely
+ * contain a superlative as part of a proper noun ("Best Buy", "Best Picture")
+ * or a measurable compound ("best-selling") are NOT flagged. Those are signalled
+ * by a hyphen or a Capitalized next word right after the superlative.
+ * (Measurable superlatives like "tallest/largest/fastest" are not in the set.)
  */
-const SUBJECTIVE = /\b(better|worse|best|worst|greatest|superior|inferior|overrated|underrated|finest|prettier|prettiest|smarter|smartest|coolest|favou?rite)\b/i;
+const COMPARATIVE_THAN = /\b(better|worse|prettier|smarter|cooler|nicer|finer)\s+than\b/i;
+const COMPARATIVE_TO = /\b(superior|inferior)\s+to\b/i;
+const OPINION_WORDS = /\b(overrated|underrated|favou?rite)\b/i;
+const SUPERLATIVE = /\b(best|worst|greatest|finest|prettiest|smartest|coolest)\b/gi;
+
 export function isSubjective(claim: string): boolean {
-  return SUBJECTIVE.test(claim);
+  if (COMPARATIVE_THAN.test(claim) || COMPARATIVE_TO.test(claim) || OPINION_WORDS.test(claim)) return true;
+  for (const m of claim.matchAll(SUPERLATIVE)) {
+    const after = claim.slice((m.index ?? 0) + m[0].length);
+    if (/^-/.test(after) || /^\s+[A-Z]/.test(after)) continue; // "best-selling", "Best Buy", "Best Picture"
+    return true; // "the best editor", "the worst movie"
+  }
+  return false;
 }
 
 export function cleanMarkdown(s: string): string {

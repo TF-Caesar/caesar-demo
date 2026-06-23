@@ -1,4 +1,4 @@
-import { extractClaims } from './claims';
+import { extractClaims, isUrl } from './claims';
 import { CaesarClient } from './caesar';
 import { verifyClaim, bestSnippet, isSubjective, type Verdict } from './verify';
 import { DEMO_RESPONSE } from '../fixtures/demo';
@@ -21,7 +21,17 @@ export async function runVerification(
   if (process.env.VERIFIER_DEMO) return DEMO_RESPONSE;
   const client = deps.client ?? new CaesarClient();
   try {
-    const claims = (await extractClaims(input)).slice(0, 6);
+    // If the input is a bare URL, read the page with Caesar and pull claims from
+    // the captured text — otherwise we'd just search the URL string itself.
+    const raw = input.trim();
+    let toAnalyze = raw;
+    if (isUrl(raw)) {
+      try {
+        const doc = await client.read(raw, { selection: 'full_document', maxChars: 12000 });
+        if (doc.text && doc.text.trim()) toAnalyze = doc.text;
+      } catch { /* page unreadable — fall back to treating the URL as the query */ }
+    }
+    const claims = (await extractClaims(toAnalyze)).slice(0, 6);
     if (claims.length === 0) return { claims: [], degraded: false };
     const results = await Promise.all(claims.map(async (claim): Promise<ClaimResult> => {
       const { citations } = await client.searchAndRead(claim, { readTopN: 3 });
@@ -40,7 +50,9 @@ export async function runVerification(
 
       let best: ClaimResult = { claim, verdict: 'UNSUPPORTED' };
       for (const c of citations) {
-        const evidence = c.text ?? c.passage ?? '';
+        // Ground on the full read text, but fall back to the structured passage
+        // when text is empty ('' is not nullish, so `??` alone would mask it).
+        const evidence = c.text?.trim() ? c.text : (c.passage ?? '');
         const { verdict } = verifyClaim({ claim, passage: evidence });
         if (RANK[verdict] > RANK[best.verdict as Rankable]) {
           best = {
