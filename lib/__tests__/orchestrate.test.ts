@@ -79,6 +79,14 @@ describe('runVerification', () => {
     expect(out.claims.length).toBeGreaterThan(0);
   });
 
+  it('does NOT read a private/metadata URL (SSRF guard)', async () => {
+    const read = vi.fn();
+    const searchAndRead = vi.fn().mockResolvedValue({ evidence: '', citations: [] });
+    const client = fakeClient({ read, searchAndRead });
+    await runVerification('http://169.254.169.254/latest/meta-data/', { client });
+    expect(read).not.toHaveBeenCalled();
+  });
+
   it('labels subjective/comparative claims as OPINION (not VERIFIED)', async () => {
     const client = fakeClient({
       searchAndRead: vi.fn().mockResolvedValue({

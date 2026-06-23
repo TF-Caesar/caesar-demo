@@ -1,4 +1,5 @@
-import { extractClaims, isUrl } from './claims';
+import { extractClaims } from './claims';
+import { isSafeReadUrl } from './url';
 import { CaesarClient } from './caesar';
 import { verifyClaim, bestSnippet, isSubjective, type Verdict } from './verify';
 import { DEMO_RESPONSE } from '../fixtures/demo';
@@ -25,7 +26,7 @@ export async function runVerification(
     // the captured text — otherwise we'd just search the URL string itself.
     const raw = input.trim();
     let toAnalyze = raw;
-    if (isUrl(raw)) {
+    if (isSafeReadUrl(raw)) {
       try {
         const doc = await client.read(raw, { selection: 'full_document', maxChars: 12000 });
         if (doc.text && doc.text.trim()) toAnalyze = doc.text;

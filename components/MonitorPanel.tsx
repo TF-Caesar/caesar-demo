@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { FreshnessResult } from '../lib/monitor';
+import { safeExternalUrl } from '../lib/url';
 
 const CHIPS = ['OpenAI model releases', 'AI search startups'];
 
@@ -78,21 +79,26 @@ export function MonitorPanel() {
         <div className="mt-6 space-y-3">
           {data.items.map((item, i) => {
             const captured = formatCapture(item.captureTime);
+            const safeUrl = safeExternalUrl(item.url);
             return (
               <article
                 key={item.url}
                 className="cv-rise rounded-card border border-bone border-l-2 border-l-coral bg-paper p-5 transition-colors duration-editorial ease-editorial hover:bg-surface"
                 style={{ animationDelay: `${i * 60}ms` }}
               >
-                <a
-                  href={item.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group inline-flex items-center gap-1 text-[15px] leading-relaxed text-ink underline decoration-hairline underline-offset-4 transition-colors duration-editorial ease-editorial hover:decoration-ink"
-                >
-                  {item.title}
-                  <span aria-hidden="true" className="text-ink-2 transition-colors duration-editorial ease-editorial group-hover:text-ink">↗</span>
-                </a>
+                {safeUrl ? (
+                  <a
+                    href={safeUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group inline-flex items-center gap-1 text-[15px] leading-relaxed text-ink underline decoration-hairline underline-offset-4 transition-colors duration-editorial ease-editorial hover:decoration-ink"
+                  >
+                    {item.title}
+                    <span aria-hidden="true" className="text-ink-2 transition-colors duration-editorial ease-editorial group-hover:text-ink">↗</span>
+                  </a>
+                ) : (
+                  <span className="text-[15px] leading-relaxed text-ink">{item.title}</span>
+                )}
                 {captured && (
                   <div className="mt-2 font-mono text-[12px] text-ink-2">{captured}</div>
                 )}

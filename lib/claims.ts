@@ -43,6 +43,7 @@ export function extractClaimsDeterministic(text: string, maxClaims = 8): string[
 async function extractClaimsLlm(text: string, apiKey: string, maxClaims: number): Promise<string[]> {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
+    signal: AbortSignal.timeout(15_000), // bound the outbound call so a hung upstream can't pin the route
     headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
     body: JSON.stringify({
       model: 'claude-haiku-4-5',

@@ -1,4 +1,5 @@
 import type { ClaimResult } from '../lib/orchestrate';
+import { safeExternalUrl } from '../lib/url';
 
 type VerdictStyle = { label: string; pill: string; dot: string; rule: string };
 
@@ -38,15 +39,19 @@ export function ResultCard({ r }: { r: ClaimResult }) {
 
       {r.source && (
         <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-ink-2">
-          <a
-            href={r.source.url}
-            target="_blank"
-            rel="noreferrer"
-            className="group inline-flex items-center gap-1 text-ink underline decoration-hairline underline-offset-4 transition-colors duration-editorial ease-editorial hover:decoration-ink"
-          >
-            {r.source.title}
-            <span aria-hidden="true" className="text-ink-2 transition-colors duration-editorial ease-editorial group-hover:text-ink">↗</span>
-          </a>
+          {safeExternalUrl(r.source.url) ? (
+            <a
+              href={safeExternalUrl(r.source.url)!}
+              target="_blank"
+              rel="noreferrer"
+              className="group inline-flex items-center gap-1 text-ink underline decoration-hairline underline-offset-4 transition-colors duration-editorial ease-editorial hover:decoration-ink"
+            >
+              {r.source.title}
+              <span aria-hidden="true" className="text-ink-2 transition-colors duration-editorial ease-editorial group-hover:text-ink">↗</span>
+            </a>
+          ) : (
+            <span className="text-ink">{r.source.title}</span>
+          )}
           {r.source.captureTime && (
             <>
               <span aria-hidden="true" className="text-hairline">·</span>

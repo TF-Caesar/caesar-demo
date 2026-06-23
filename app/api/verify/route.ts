@@ -4,7 +4,12 @@ import { runVerification } from '../../../lib/orchestrate';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
+const MAX_BODY_BYTES = 32_000; // a claim/paragraph/URL is tiny; reject abuse early
+
 export async function POST(req: Request) {
+  if (Number(req.headers.get('content-length') ?? 0) > MAX_BODY_BYTES) {
+    return NextResponse.json({ claims: [], degraded: false }, { status: 413 });
+  }
   let input = '';
   try {
     input = (await req.json())?.input ?? '';

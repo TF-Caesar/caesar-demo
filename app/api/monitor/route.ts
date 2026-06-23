@@ -4,7 +4,12 @@ import { runFreshnessScan } from '../../../lib/monitor';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
+const MAX_BODY_BYTES = 32_000; // a topic is tiny; reject abuse early
+
 export async function POST(req: Request) {
+  if (Number(req.headers.get('content-length') ?? 0) > MAX_BODY_BYTES) {
+    return NextResponse.json({ topic: '', items: [], degraded: false }, { status: 413 });
+  }
   let topic = '';
   try {
     topic = (await req.json())?.topic ?? '';

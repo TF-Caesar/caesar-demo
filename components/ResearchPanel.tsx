@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { ResearchResult } from '../lib/api-research';
+import { safeExternalUrl } from '../lib/url';
 
 const EXAMPLES = ['Who won the 2022 World Cup', 'State of fusion energy 2026'];
 
@@ -94,19 +95,24 @@ export function ResearchPanel() {
               <ol className="mt-3 space-y-3">
                 {data.sources.map((src) => {
                   const captured = formatCapture(src.capturedISO);
+                  const safeUrl = safeExternalUrl(src.url);
                   return (
                     <li key={src.index} className="flex gap-3 text-[13px]">
                       <span className="font-mono text-lilac-deep">{src.index}.</span>
                       <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <a
-                          href={src.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="group inline-flex items-center gap-1 text-[15px] text-ink underline decoration-hairline underline-offset-4 transition-colors duration-editorial ease-editorial hover:decoration-ink"
-                        >
-                          {src.title}
-                          <span aria-hidden="true" className="text-ink-2 transition-colors duration-editorial ease-editorial group-hover:text-ink">↗</span>
-                        </a>
+                        {safeUrl ? (
+                          <a
+                            href={safeUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="group inline-flex items-center gap-1 text-[15px] text-ink underline decoration-hairline underline-offset-4 transition-colors duration-editorial ease-editorial hover:decoration-ink"
+                          >
+                            {src.title}
+                            <span aria-hidden="true" className="text-ink-2 transition-colors duration-editorial ease-editorial group-hover:text-ink">↗</span>
+                          </a>
+                        ) : (
+                          <span className="text-[15px] text-ink">{src.title}</span>
+                        )}
                         {captured && (
                           <>
                             <span aria-hidden="true" className="text-hairline">·</span>
