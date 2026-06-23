@@ -1,6 +1,6 @@
 import { extractClaims } from './claims';
 import { CaesarClient } from './caesar';
-import { verifyClaim, bestSnippet, type Verdict } from './verify';
+import { verifyClaim, bestSnippet, isSubjective, type Verdict } from './verify';
 import { DEMO_RESPONSE } from '../fixtures/demo';
 
 export interface ClaimResult {
@@ -12,6 +12,7 @@ export interface ClaimResult {
 export interface VerifyResponse { claims: ClaimResult[]; degraded: boolean; }
 
 const RANK = { VERIFIED: 2, NEEDS_CONTEXT: 1, UNSUPPORTED: 0 } as const;
+type Rankable = keyof typeof RANK;
 
 export async function runVerification(
   input: string,
@@ -24,13 +25,24 @@ export async function runVerification(
     if (claims.length === 0) return { claims: [], degraded: false };
     const results = await Promise.all(claims.map(async (claim): Promise<ClaimResult> => {
       const { citations } = await client.searchAndRead(claim, { readTopN: 3 });
+
+      // Subjective/comparative claims are opinions, not checkable facts — label
+      // them OPINION and attach the most relevant source as related reading.
+      if (isSubjective(claim)) {
+        const c = citations.find((x) => x.passage || x.text) ?? citations[0];
+        return {
+          claim,
+          verdict: 'OPINION',
+          source: c ? { title: c.title, url: c.canonicalUrl, captureTime: c.captureTime } : undefined,
+          passage: c ? (c.passage ?? bestSnippet(c.text ?? '', claim)) : undefined,
+        };
+      }
+
       let best: ClaimResult = { claim, verdict: 'UNSUPPORTED' };
       for (const c of citations) {
-        // Anonymous reads often return content.text but no structured passages,
-        // so ground against the structured passage if present, else the full text.
         const evidence = c.passage ?? c.text ?? '';
         const { verdict } = verifyClaim({ claim, passage: evidence });
-        if (RANK[verdict] > RANK[best.verdict]) {
+        if (RANK[verdict] > RANK[best.verdict as Rankable]) {
           best = {
             claim,
             verdict,

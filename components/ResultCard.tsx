@@ -6,6 +6,8 @@ const VERDICT: Record<ClaimResult['verdict'], VerdictStyle> = {
   VERIFIED: { label: 'VERIFIED', pill: 'bg-sage-tint text-sage-deep', dot: 'bg-sage-deep', rule: 'border-sage' },
   NEEDS_CONTEXT: { label: 'NEEDS CONTEXT', pill: 'bg-coral-tint text-coral-deep', dot: 'bg-coral-deep', rule: 'border-coral' },
   UNSUPPORTED: { label: 'UNSUPPORTED', pill: 'bg-clay-tint text-clay-deep', dot: 'bg-clay-deep', rule: 'border-clay' },
+  // A subjective/comparative claim — not a checkable fact. Quiet, neutral, no judgement.
+  OPINION: { label: 'OPINION · NOT A FACT', pill: 'bg-surface text-ink-2 ring-1 ring-bone', dot: 'bg-ink-2', rule: 'border-bone' },
 };
 
 const FALLBACK: VerdictStyle = { label: 'UNVERIFIED', pill: 'bg-clay-tint text-clay-deep', dot: 'bg-clay-deep', rule: 'border-clay' };

@@ -7,7 +7,7 @@ function fakeClient(over: Partial<CaesarClient>): CaesarClient {
 }
 
 describe('runVerification', () => {
-  it('verifies a claim against a structured passage', async () => {
+  it('verifies a claim against a captured passage', async () => {
     const client = fakeClient({
       searchAndRead: vi.fn().mockResolvedValue({
         evidence: 'x',
@@ -38,6 +38,22 @@ describe('runVerification', () => {
     const out = await runVerification('The National Ignition Facility achieved fusion ignition in 2022.', { client });
     expect(out.claims[0].verdict).toBe('VERIFIED');
     expect(out.claims[0].passage).toContain('2022');
+  });
+
+  it('labels subjective/comparative claims as OPINION (not VERIFIED)', async () => {
+    const client = fakeClient({
+      searchAndRead: vi.fn().mockResolvedValue({
+        evidence: 'x',
+        citations: [{
+          rank: 1, title: 'Why JS is better than Python', canonicalUrl: 'https://x.com/a', docId: 'd1',
+          captureTime: '2026-06-21T14:03:00Z',
+          text: 'Some developers argue JavaScript is better than Python for web work.',
+        }],
+      }),
+    });
+    const out = await runVerification('Python is better than JavaScript.', { client });
+    expect(out.claims[0].verdict).toBe('OPINION');
+    expect(out.claims[0].source?.url).toBe('https://x.com/a');
   });
 
   it('degrades to a demo response when Caesar throws', async () => {

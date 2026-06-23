@@ -1,29 +1,44 @@
 import { describe, it, expect } from 'vitest';
-import { verifyClaim, hardTokens } from '../verify';
+import { verifyClaim, isSubjective, claimNumbers } from '../verify';
 
-describe('hardTokens', () => {
-  it('pulls numbers and proper nouns', () => {
-    const t = hardTokens('NIF achieved ignition in 2022 with 192 lasers');
-    expect(t).toContain('2022');
-    expect(t).toContain('192');
-    expect(t).toContain('NIF');
+describe('isSubjective', () => {
+  it('flags comparative/opinion claims', () => {
+    expect(isSubjective('Python is better than JavaScript')).toBe(true);
+    expect(isSubjective('Deerflow 2.0 is better than Hermes and OpenClaw')).toBe(true);
+    expect(isSubjective('Lionel Messi is the greatest footballer of all time')).toBe(true);
+  });
+  it('does not flag factual claims or proper nouns containing "great"', () => {
+    expect(isSubjective('The Great Wall of China is over 21000 km long')).toBe(false);
+    expect(isSubjective('Mount Everest is the tallest mountain on Earth')).toBe(false);
+    expect(isSubjective('The 2022 FIFA World Cup was held in Qatar')).toBe(false);
   });
 });
 
-describe('verifyClaim', () => {
-  const claim = 'The National Ignition Facility achieved fusion ignition in 2022';
-  it('VERIFIED when terms + a hard token appear in the passage', () => {
-    const passage = 'On December 5, 2022 the National Ignition Facility achieved fusion ignition for the first time.';
-    expect(verifyClaim({ claim, passage }).verdict).toBe('VERIFIED');
+describe('claimNumbers', () => {
+  it('pulls the numbers/dates a claim asserts', () => {
+    expect(claimNumbers('GPT-4 released in 2019')).toEqual(['4', '2019']);
+    expect(claimNumbers('The Eiffel Tower is 450 metres tall')).toEqual(['450']);
   });
-  it('NEEDS_CONTEXT when terms match but the hard token is absent', () => {
+});
+
+describe('verifyClaim (sentence-level)', () => {
+  const nif = 'The National Ignition Facility achieved fusion ignition in 2022';
+  it('VERIFIED when one sentence has the terms AND the asserted number', () => {
+    const passage = 'On December 5, 2022 the National Ignition Facility achieved fusion ignition for the first time.';
+    expect(verifyClaim({ claim: nif, passage }).verdict).toBe('VERIFIED');
+  });
+  it('does NOT verify a wrong date even if the number appears elsewhere on the page', () => {
+    const passage = 'GPT-4 was released by OpenAI in March 2023.\nGPT-2 had been released back in 2019.';
+    expect(verifyClaim({ claim: 'GPT-4 released in 2019', passage }).verdict).not.toBe('VERIFIED');
+  });
+  it('NEEDS_CONTEXT when terms match but the asserted number is absent', () => {
     const passage = 'The National Ignition Facility works on fusion ignition research at Livermore.';
-    expect(verifyClaim({ claim, passage }).verdict).toBe('NEEDS_CONTEXT');
+    expect(verifyClaim({ claim: nif, passage }).verdict).toBe('NEEDS_CONTEXT');
   });
   it('UNSUPPORTED when unrelated', () => {
-    expect(verifyClaim({ claim, passage: 'Tokamaks use magnetic confinement to contain plasma.' }).verdict).toBe('UNSUPPORTED');
+    expect(verifyClaim({ claim: nif, passage: 'Tokamaks use magnetic confinement to contain plasma.' }).verdict).toBe('UNSUPPORTED');
   });
   it('UNSUPPORTED when no passage', () => {
-    expect(verifyClaim({ claim, passage: null }).verdict).toBe('UNSUPPORTED');
+    expect(verifyClaim({ claim: nif, passage: null }).verdict).toBe('UNSUPPORTED');
   });
 });
