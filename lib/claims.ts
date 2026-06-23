@@ -15,6 +15,16 @@ export function splitSentences(text: string): string[] {
   return text.replace(/\s+/g, ' ').trim().split(SENTENCE_SPLIT).map((s) => s.trim()).filter(Boolean);
 }
 
+/** Strip markdown noise (images, links, marks) from a claim pulled out of a page. */
+function cleanClaimText(s: string): string {
+  return s
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')    // images removed entirely
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')  // links -> their text
+    .replace(/[*_`~#>|]+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function looksFactual(sentence: string): boolean {
   const longEnough = sentence.split(/\s+/).length >= 4;
   const hasNumber = /\d/.test(sentence);
@@ -25,8 +35,8 @@ function looksFactual(sentence: string): boolean {
 export function extractClaimsDeterministic(text: string, maxClaims = 8): string[] {
   const single = text.trim();
   if (!single) return [];
-  const sentences = splitSentences(single);
-  if (sentences.length <= 1) return [single];
+  const sentences = splitSentences(single).map(cleanClaimText).filter(Boolean);
+  if (sentences.length <= 1) return sentences.length ? [sentences[0]] : [];
   return sentences.filter(looksFactual).slice(0, maxClaims);
 }
 

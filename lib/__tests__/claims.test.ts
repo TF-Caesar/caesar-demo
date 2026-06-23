@@ -30,6 +30,21 @@ describe('extractClaimsDeterministic', () => {
   });
 });
 
+describe('extractClaimsDeterministic markdown handling', () => {
+  it('strips link markdown from claims pulled out of a page', () => {
+    const page = 'The 2022 final was played at [Lusail Stadium](https://en.wikipedia.org/wiki/Lusail) near Doha. A record 1.5 billion people watched it on television worldwide.';
+    const claims = extractClaimsDeterministic(page);
+    expect(claims.join(' ')).not.toMatch(/\]\(http/);
+    expect(claims.some((c) => c.includes('Lusail Stadium') && !c.includes('http'))).toBe(true);
+  });
+  it('removes inline image refs that would otherwise pollute a claim', () => {
+    const page = 'The 2022 FIFA World Cup final![Image 1](https://upload.wikimedia.org/x.png) was contested by Argentina and France in Qatar.';
+    const claims = extractClaimsDeterministic(page);
+    expect(claims.join(' ')).not.toMatch(/Image 1|\.png|upload\.wikimedia|!\[/);
+    expect(claims.some((c) => c.includes('Argentina and France'))).toBe(true);
+  });
+});
+
 describe('extractClaims', () => {
   it('uses deterministic extraction when no llm key is provided', async () => {
     const claims = await extractClaims('OpenAI released GPT-5 in 2025. nice.', {});
