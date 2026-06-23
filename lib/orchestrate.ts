@@ -40,7 +40,7 @@ export async function runVerification(
 
       let best: ClaimResult = { claim, verdict: 'UNSUPPORTED' };
       for (const c of citations) {
-        const evidence = c.passage ?? c.text ?? '';
+        const evidence = c.text ?? c.passage ?? '';
         const { verdict } = verifyClaim({ claim, passage: evidence });
         if (RANK[verdict] > RANK[best.verdict as Rankable]) {
           best = {
