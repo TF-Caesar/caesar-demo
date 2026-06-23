@@ -30,6 +30,13 @@ const DEMOS: Demo[] = [
     sample: 'OpenAI model releases',
     dot: 'bg-coral', arrow: 'text-coral', hover: 'hover:border-coral hover:bg-coral-tint',
   },
+  {
+    href: '/find',
+    name: 'Finder',
+    description: 'Name a product or describe it — find what it is and where to buy it, with captured prices.',
+    sample: 'running shoes with individual toe slots',
+    dot: 'bg-clay', arrow: 'text-clay', hover: 'hover:border-clay hover:bg-clay-tint',
+  },
 ];
 
 export default function Hub() {

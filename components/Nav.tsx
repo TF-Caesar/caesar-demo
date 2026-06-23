@@ -22,6 +22,7 @@ export function Nav() {
         <Link href="/verifier" className={NAV_LINK}>Verifier</Link>
         <Link href="/research" className={NAV_LINK}>Research</Link>
         <Link href="/monitor" className={NAV_LINK}>Monitor</Link>
+        <Link href="/find" className={NAV_LINK}>Finder</Link>
         <a
           href="https://github.com/TF-Caesar"
           target="_blank"
