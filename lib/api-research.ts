@@ -31,7 +31,7 @@ export async function runResearch(
   if (process.env.VERIFIER_DEMO) return demoResearch(question);
   const client = deps.client ?? new CaesarClient();
   try {
-    const { citations } = await client.searchAndRead(question, { maxResults: 10, readTopN: 4 });
+    const { citations } = await client.searchAndRead(question, { maxResults: 10, readTopN: 4, mode: 'research', minScore: 0.3 });
     const summary = summarize(citations, question, 5);
     const sources = formatSources(citations);
     if (summary.length === 0 && sources.length === 0) return demoResearch(question);

@@ -28,7 +28,7 @@ export async function runVerification(
     let toAnalyze = raw;
     if (isSafeReadUrl(raw)) {
       try {
-        const doc = await client.read(raw, { selection: 'full_document', maxChars: 12000 });
+        const doc = await client.read(raw, { maxChars: 12000 }); // no query -> SDK reads the full document
         if (doc.text && doc.text.trim()) toAnalyze = doc.text;
       } catch { /* page unreadable — fall back to treating the URL as the query */ }
     }
