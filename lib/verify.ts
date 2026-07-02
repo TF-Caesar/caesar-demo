@@ -11,9 +11,24 @@ export function keyTerms(claim: string): string[] {
     .filter((w) => w.length > 2 && !STOPWORDS.has(w));
 }
 
-/** Standalone numbers/dates/money/percentages the claim asserts. */
+/** Standalone numbers/dates/money/percentages the claim asserts (comma-normalized: "1,500" -> "1500"). */
 export function claimNumbers(claim: string): string[] {
-  return [...claim.matchAll(/\$?\d[\d,]*(?:\.\d+)?%?/g)].map((m) => m[0]);
+  return [...claim.matchAll(/\$?\d[\d,]*(?:\.\d+)?%?/g)].map((m) => m[0].replace(/,/g, ''));
+}
+
+/**
+ * True when `hay` contains `num` as a WHOLE number, not as a substring of a
+ * different figure — "30" must not match "330" or "30.5", and "1,500" in the
+ * source must match a claimed "1500". Substring matching here is how a false
+ * claim gets VERIFIED against a passage that contradicts it.
+ */
+export function hasNumber(hay: string, num: string): boolean {
+  const h = hay.replace(/(\d),(?=\d)/g, '$1'); // drop thousands separators before comparing
+  const esc = num.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // No digit/decimal continuation on either side: "330" can't satisfy "30",
+  // "20223" can't satisfy "2022", "30.5" can't satisfy "30". A trailing
+  // sentence period ("...is 330.") is fine — only ".<digit>" extends a number.
+  return new RegExp(`(?<![\\d.,])${esc}(?!\\d|[.,]\\d)`).test(h);
 }
 
 /** ALL-CAPS acronyms — entity anchors (NIF, GPT, FIFA). */
@@ -84,7 +99,7 @@ export function verifyClaim({ claim, passage }: { claim: string; passage: string
     const cov = terms.length ? matched.length / terms.length : 0;
     if (cov > bestCov) { bestCov = cov; bestMatched = matched; }
     if (cov >= 0.6) {
-      const numbersOk = numbers.length > 0 && numbers.every((n) => has(s, n));
+      const numbersOk = numbers.length > 0 && numbers.every((n) => hasNumber(s, n));
       const acronymOk = acronyms.some((a) => s.includes(a));
       if (numbersOk || (numbers.length === 0 && acronymOk)) verified = true;
     }

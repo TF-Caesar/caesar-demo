@@ -1,4 +1,5 @@
 import { CaesarClient } from './caesar';
+import { demoModeEnabled } from './orchestrate';
 
 export interface FreshnessItem {
   title: string;
@@ -16,15 +17,15 @@ export interface FreshnessResult {
  * Freshness radar: search a topic, read the top sources, and surface the most
  * recently captured items (newest first), de-duplicated by URL.
  *
- * Keyless by default. If VERIFIER_DEMO is set OR anything throws, returns a
- * baked demo scan (degraded:true) so the hosted demo never blanks.
+ * Keyless by default. If demo mode is on (VERIFIER_DEMO=1) OR anything throws,
+ * returns a baked demo scan (degraded:true) so the hosted demo never blanks.
  */
 export async function runFreshnessScan(
   topic: string,
   deps: { client?: CaesarClient } = {},
 ): Promise<FreshnessResult> {
   const t = topic.trim();
-  if (process.env.VERIFIER_DEMO) return demoScan(t);
+  if (demoModeEnabled()) return demoScan(t);
   const client = deps.client ?? new CaesarClient();
   try {
     const { citations } = await client.searchAndRead(t, { maxResults: 12, readTopN: 6 });
@@ -57,14 +58,17 @@ export async function runFreshnessScan(
 
 /** Shown when the free tier is busy (and in VERIFIER_DEMO mode). */
 function demoScan(topic: string): FreshnessResult {
+  // Demo capture times are relative so the fallback never displays months-old
+  // "freshness": a freshness radar with stale timestamps would refute itself.
+  const minutesAgo = (m: number) => new Date(Date.now() - m * 60_000).toISOString();
   return {
     topic: topic || 'OpenAI model releases',
     degraded: true,
     items: [
-      { title: 'OpenAI announces its newest flagship model — OpenAI', url: 'https://openai.com/index/', captureTime: '2026-06-22T09:41:00Z' },
-      { title: 'What the latest OpenAI release means for developers — The Verge', url: 'https://www.theverge.com/openai', captureTime: '2026-06-22T08:12:00Z' },
-      { title: 'OpenAI updates its API pricing and rate limits — TechCrunch', url: 'https://techcrunch.com/tag/openai/', captureTime: '2026-06-21T17:55:00Z' },
-      { title: 'Benchmarks for the new OpenAI model — Ars Technica', url: 'https://arstechnica.com/ai/', captureTime: '2026-06-21T13:20:00Z' },
+      { title: 'OpenAI announces its newest flagship model — OpenAI', url: 'https://openai.com/index/', captureTime: minutesAgo(14) },
+      { title: 'What the latest OpenAI release means for developers — The Verge', url: 'https://www.theverge.com/openai', captureTime: minutesAgo(103) },
+      { title: 'OpenAI updates its API pricing and rate limits — TechCrunch', url: 'https://techcrunch.com/tag/openai/', captureTime: minutesAgo(60 * 16) },
+      { title: 'Benchmarks for the new OpenAI model — Ars Technica', url: 'https://arstechnica.com/ai/', captureTime: minutesAgo(60 * 20) },
     ],
   };
 }
