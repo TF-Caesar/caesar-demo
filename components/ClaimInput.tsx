@@ -112,7 +112,7 @@ export function ClaimInput() {
         <div className="mt-6 space-y-4">
           {claims.map((r, i) => (
             <div key={i} className="cv-rise" style={{ animationDelay: `${i * 60}ms` }}>
-              <ResultCard r={r} />
+              <ResultCard r={r} tier={data?.tier} />
             </div>
           ))}
         </div>

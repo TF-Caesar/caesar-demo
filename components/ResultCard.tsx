@@ -19,8 +19,48 @@ function formatCapture(iso: string): string {
   return `captured ${d.toISOString().slice(0, 16).replace('T', ' ')} UTC`;
 }
 
-export function ResultCard({ r }: { r: ClaimResult }) {
+/** Compact relative age for the receipt ("just now", "7m ago", "3h ago", "2d ago"); undefined when unparseable. */
+function relativeAge(iso: string): string | undefined {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return undefined;
+  const seconds = Math.max(0, Math.floor((Date.now() - t) / 1000));
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
+/** Publication date for the receipt: date only, never a fabricated clock time. */
+function publishedDate(iso: string): string {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return iso;
+  return new Date(t).toISOString().slice(0, 10);
+}
+
+/**
+ * One receipt line per field Caesar actually returned; nothing is fabricated.
+ * publishedAt is best-effort upstream, so the capture line is the fallback
+ * freshness signal and publication appears only when known.
+ */
+function receiptLines(r: ClaimResult, tier?: string): string[] {
+  const lines: string[] = [];
+  const captureParts: string[] = [];
+  if (r.captureId) captureParts.push(`capture ${r.captureId.slice(0, 8)}`);
+  const age = r.source?.captureTime ? relativeAge(r.source.captureTime) : undefined;
+  if (age) captureParts.push(`captured ${age}`);
+  if (captureParts.length > 0) lines.push(captureParts.join(' · '));
+  if (r.publishedAt) lines.push(`published ${publishedDate(r.publishedAt)}`);
+  if (typeof r.score === 'number') lines.push(`relevance ${r.score.toFixed(2)}`);
+  if (r.passageId) lines.push(`passage ${r.passageId.slice(0, 8)}`);
+  if (tier) lines.push(`${tier} tier`);
+  return lines;
+}
+
+export function ResultCard({ r, tier }: { r: ClaimResult; tier?: string }) {
   const v = VERDICT[r.verdict] ?? FALLBACK;
+  const receipt = receiptLines(r, tier);
 
   return (
     <article className="rounded-card border border-bone bg-paper p-6 transition-colors duration-editorial ease-editorial hover:bg-surface">
@@ -59,6 +99,19 @@ export function ResultCard({ r }: { r: ClaimResult }) {
             </>
           )}
         </div>
+      )}
+
+      {receipt.length > 0 && (
+        <details className="mt-3">
+          <summary className="cursor-pointer select-none font-mono text-[11px] tracking-label text-ink-2 transition-colors duration-editorial ease-editorial hover:text-ink">
+            receipt
+          </summary>
+          <div className="mt-1.5 space-y-0.5 font-mono text-[11px] leading-relaxed text-ink-2">
+            {receipt.map((line) => (
+              <div key={line}>{line}</div>
+            ))}
+          </div>
+        </details>
       )}
     </article>
   );
