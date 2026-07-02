@@ -14,37 +14,28 @@ export function ProductCard({ offer }: { offer: Offer }) {
 
   return (
     <article className="rounded-card border border-bone border-l-2 border-l-clay bg-paper p-5 transition-colors duration-editorial ease-editorial hover:bg-surface">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          {safeUrl ? (
-            <a
-              href={safeUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="group inline-flex items-center gap-1 text-[15px] leading-snug text-ink underline decoration-hairline underline-offset-4 transition-colors duration-editorial ease-editorial hover:decoration-ink"
-            >
-              {offer.productTitle}
-              <span aria-hidden="true" className="text-ink-2 transition-colors duration-editorial ease-editorial group-hover:text-ink">↗</span>
-            </a>
-          ) : (
-            <span className="text-[15px] leading-snug text-ink">{offer.productTitle}</span>
-          )}
-          <div className="mt-1 text-[12px] text-ink-2">{offer.retailer}</div>
-        </div>
-        {offer.price && (
-          <span className="shrink-0 rounded-pill bg-clay-tint px-2.5 py-1 font-mono text-[13px] font-medium text-clay-deep">
-            {offer.price}
-          </span>
+      <div className="min-w-0">
+        {safeUrl ? (
+          <a
+            href={safeUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="group inline-flex items-center gap-1 text-[15px] leading-snug text-ink underline decoration-hairline underline-offset-4 transition-colors duration-editorial ease-editorial hover:decoration-ink"
+          >
+            {offer.productTitle}
+            <span aria-hidden="true" className="text-ink-2 transition-colors duration-editorial ease-editorial group-hover:text-ink">↗</span>
+          </a>
+        ) : (
+          <span className="text-[15px] leading-snug text-ink">{offer.productTitle}</span>
         )}
+        <div className="mt-1 text-[12px] text-ink-2">{offer.retailer}</div>
       </div>
 
       {offer.snippet && <p className="mt-3 text-[13px] leading-relaxed text-ink-2">{offer.snippet}</p>}
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-2 text-[12px] text-ink-2">
-        {offer.price && <span className="font-mono">captured price</span>}
-        {offer.price && captured && <span aria-hidden="true" className="text-hairline">·</span>}
-        {captured && <span className="font-mono">{captured}</span>}
-      </div>
+      {captured && (
+        <div className="mt-3 font-mono text-[12px] text-ink-2">{captured}</div>
+      )}
     </article>
   );
 }

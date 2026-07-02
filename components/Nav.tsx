@@ -9,7 +9,7 @@ function CaesarMark() {
 const NAV_LINK =
   'text-ink-2 transition-colors duration-editorial ease-editorial hover:text-ink';
 
-/** Small top nav shown on every page: the mark + the three demos, GitHub on the right. */
+/** Small top nav shown on every page: the mark + the four demos, GitHub on the right. */
 export function Nav() {
   return (
     <nav className="mx-auto flex w-full max-w-frame items-center gap-5 px-6 pt-6 text-[13px] sm:pt-8">

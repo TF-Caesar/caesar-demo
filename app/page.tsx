@@ -33,7 +33,7 @@ const DEMOS: Demo[] = [
   {
     href: '/find',
     name: 'Finder',
-    description: 'Name a product or describe it — find what it is and where to buy it, with captured prices.',
+    description: 'Name a product or describe it: find what it is and where to buy it, live retailer listings with capture timestamps.',
     sample: 'running shoes with individual toe slots',
     dot: 'bg-clay', arrow: 'text-clay', hover: 'hover:border-clay hover:bg-clay-tint',
   },
@@ -51,7 +51,7 @@ export default function Hub() {
         </div>
 
         <p className="mt-5 max-w-[46ch] text-[1.0625rem] leading-relaxed text-ink-2">
-          Three free, no-signup demos of{' '}
+          Four free, no-signup demos of{' '}
           <a
             href="https://trycaesar.com"
             target="_blank"
@@ -60,7 +60,7 @@ export default function Hub() {
           >
             Caesar
           </a>{' '}
-          search — verify a claim, research anything, watch a topic.
+          search: verify a claim, research anything, watch a topic, find it to buy it.
         </p>
       </section>
 

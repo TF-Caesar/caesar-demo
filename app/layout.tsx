@@ -8,9 +8,9 @@ const geist = Geist({ subsets: ['latin'], weight: ['400', '500', '600'], variabl
 const geistMono = Geist_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-geist-mono', display: 'swap' });
 
 export const metadata: Metadata = {
-  title: 'Caesar Demos — free search, three ways',
+  title: 'Caesar Demos: free search, four ways',
   description:
-    'Three free, no-signup demos of Caesar search — verify a claim, research anything with receipts, and watch a topic for what is new. Powered by Caesar search.',
+    'Four free, no-signup demos of Caesar search: verify a claim, research anything with receipts, watch a topic for what is new, and find a product to buy it. Powered by Caesar search.',
   icons: { icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }] },
 };
 

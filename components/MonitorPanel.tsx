@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { FreshnessResult } from '../lib/monitor';
 import { safeExternalUrl } from '../lib/url';
 
@@ -17,20 +17,47 @@ export function MonitorPanel() {
   const [topic, setTopic] = useState('');
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<FreshnessResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  // Monotonic request id: a slow, stale response must never overwrite a newer one.
+  const seqRef = useRef(0);
 
   async function run(text: string) {
-    if (!text.trim()) return;
+    if (!text.trim() || loading) return;
+    const seq = ++seqRef.current;
     setLoading(true);
     setData(null);
+    setError(null);
     try {
       const res = await fetch('/api/monitor', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ topic: text }),
+        signal: AbortSignal.timeout(90_000),
       });
-      setData((await res.json()) as FreshnessResult);
+      if (!res.ok) {
+        if (seq !== seqRef.current) return;
+        setError(
+          res.status === 429
+            ? 'Scans are coming in faster than the free tier allows. Wait a moment and try again.'
+            : res.status === 413
+              ? 'That topic is too large. Try a shorter one.'
+              : 'Something went wrong on our side. Try again in a moment.',
+        );
+        return;
+      }
+      const body = (await res.json()) as FreshnessResult;
+      if (seq !== seqRef.current) return;
+      setData(body);
+    } catch (err) {
+      if (seq !== seqRef.current) return;
+      const timedOut = err instanceof Error && (err.name === 'TimeoutError' || err.name === 'AbortError');
+      setError(
+        timedOut
+          ? 'That scan took too long. Try again in a moment.'
+          : 'Could not reach the demo. Check your connection and try again.',
+      );
     } finally {
-      setLoading(false);
+      if (seq === seqRef.current) setLoading(false);
     }
   }
 
@@ -40,7 +67,7 @@ export function MonitorPanel() {
         <input
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') run(topic); }}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !loading) run(topic); }}
           placeholder="Topic to watch…"
           aria-label="Topic to watch"
           className="w-full rounded-input border border-hairline bg-paper px-4 py-3 text-[15px] leading-relaxed text-ink outline-none transition-colors duration-editorial ease-editorial placeholder:text-ink-2 focus:border-ink-2"
@@ -67,6 +94,13 @@ export function MonitorPanel() {
           </button>
         ))}
       </div>
+
+      {error && (
+        <div role="alert" className="mt-7 inline-flex items-center gap-2 rounded-pill bg-surface px-3 py-1.5 text-[12px] text-coral-deep">
+          <span className="h-1.5 w-1.5 rounded-full bg-coral" aria-hidden="true" />
+          {error}
+        </div>
+      )}
 
       {data?.degraded && (
         <div className="mt-7 inline-flex items-center gap-2 rounded-pill bg-surface px-3 py-1.5 text-[12px] text-ink-2">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ResearchResult } from '../lib/api-research';
 import { safeExternalUrl } from '../lib/url';
 
@@ -17,20 +17,47 @@ export function ResearchPanel() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<ResearchResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  // Monotonic request id: a slow, stale response must never overwrite a newer one.
+  const seqRef = useRef(0);
 
   async function run(text: string) {
-    if (!text.trim()) return;
+    if (!text.trim() || loading) return;
+    const seq = ++seqRef.current;
     setLoading(true);
     setData(null);
+    setError(null);
     try {
       const res = await fetch('/api/research', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ input: text }),
+        signal: AbortSignal.timeout(90_000),
       });
-      setData((await res.json()) as ResearchResult);
+      if (!res.ok) {
+        if (seq !== seqRef.current) return;
+        setError(
+          res.status === 429
+            ? 'Questions are coming in faster than the free tier allows. Wait a moment and try again.'
+            : res.status === 413
+              ? 'That question is too large. Try a shorter one.'
+              : 'Something went wrong on our side. Try again in a moment.',
+        );
+        return;
+      }
+      const body = (await res.json()) as ResearchResult;
+      if (seq !== seqRef.current) return;
+      setData(body);
+    } catch (err) {
+      if (seq !== seqRef.current) return;
+      const timedOut = err instanceof Error && (err.name === 'TimeoutError' || err.name === 'AbortError');
+      setError(
+        timedOut
+          ? 'That briefing took too long. Try again in a moment.'
+          : 'Could not reach the demo. Check your connection and try again.',
+      );
     } finally {
-      setLoading(false);
+      if (seq === seqRef.current) setLoading(false);
     }
   }
 
@@ -65,6 +92,13 @@ export function ResearchPanel() {
           </button>
         ))}
       </div>
+
+      {error && (
+        <div role="alert" className="mt-7 inline-flex items-center gap-2 rounded-pill bg-surface px-3 py-1.5 text-[12px] text-coral-deep">
+          <span className="h-1.5 w-1.5 rounded-full bg-coral" aria-hidden="true" />
+          {error}
+        </div>
+      )}
 
       {data?.degraded && (
         <div className="mt-7 inline-flex items-center gap-2 rounded-pill bg-surface px-3 py-1.5 text-[12px] text-ink-2">

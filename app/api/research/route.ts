@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { runResearch } from '../../../lib/api-research';
+import { clientIp, rateLimit } from '../../../lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -7,12 +8,33 @@ export const maxDuration = 60;
 const MAX_BODY_BYTES = 32_000; // a research question is tiny; reject abuse early
 
 export async function POST(req: Request) {
+  // Rate-limit before any Caesar work: one anonymous POST fans out to several
+  // upstream calls, so an unthrottled loop drains the quota.
+  const limit = rateLimit(clientIp(req));
+  if (!limit.ok) {
+    const retryAfterSeconds = limit.retryAfterSeconds ?? 60;
+    return NextResponse.json(
+      { error: 'rate_limited', retryAfterSeconds },
+      { status: 429, headers: { 'Retry-After': String(retryAfterSeconds) } },
+    );
+  }
   if (Number(req.headers.get('content-length') ?? 0) > MAX_BODY_BYTES) {
-    return NextResponse.json({ question: '', summary: [], sources: [], degraded: false }, { status: 413 });
+    return NextResponse.json({ error: 'payload_too_large' }, { status: 413 });
+  }
+  // Also cap the actual body: chunked / missing Content-Length bypasses the
+  // header check, and an unbounded req.json() would buffer it all in memory.
+  let raw = '';
+  try {
+    raw = await req.text();
+  } catch {
+    raw = '';
+  }
+  if (Buffer.byteLength(raw, 'utf8') > MAX_BODY_BYTES) {
+    return NextResponse.json({ error: 'payload_too_large' }, { status: 413 });
   }
   let input = '';
   try {
-    input = (await req.json())?.input ?? '';
+    input = JSON.parse(raw)?.input ?? '';
   } catch {
     input = '';
   }
