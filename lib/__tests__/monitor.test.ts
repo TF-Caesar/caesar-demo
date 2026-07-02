@@ -28,6 +28,39 @@ describe('runFreshnessScan', () => {
     expect(out.items.every((i) => i.captureTime)).toBe(true); // every radar item has a real capture moment
   });
 
+  it('carries publishedAt and prefers it over captureTime for ordering', async () => {
+    const client = fakeClient({
+      searchAndRead: vi.fn().mockResolvedValue({
+        evidence: 'x',
+        citations: [
+          // Captured later but published earlier: capture order alone would put it first.
+          { rank: 1, title: 'Old story, fresh capture', canonicalUrl: 'https://o/a', docId: 'a', captureTime: '2026-06-22T10:00:00Z', publishedAt: '2026-06-20T00:00:00Z' },
+          { rank: 2, title: 'New story', canonicalUrl: 'https://o/b', docId: 'b', captureTime: '2026-06-22T09:00:00Z', publishedAt: '2026-06-21T00:00:00Z' },
+        ],
+      }),
+    });
+    const out = await runFreshnessScan('openai releases', { client });
+    expect(out.items.map((i) => i.url)).toEqual(['https://o/b', 'https://o/a']);
+    expect(out.items[0].publishedAt).toBe('2026-06-21T00:00:00Z');
+    expect(out.items[1].publishedAt).toBe('2026-06-20T00:00:00Z');
+  });
+
+  it('items without publishedAt fall back to captureTime for ordering', async () => {
+    const client = fakeClient({
+      searchAndRead: vi.fn().mockResolvedValue({
+        evidence: 'x',
+        citations: [
+          { rank: 1, title: 'Published wins', canonicalUrl: 'https://o/a', docId: 'a', captureTime: '2026-06-22T09:00:00Z', publishedAt: '2026-06-22T11:00:00Z' },
+          { rank: 2, title: 'Capture only', canonicalUrl: 'https://o/b', docId: 'b', captureTime: '2026-06-22T10:00:00Z' },
+        ],
+      }),
+    });
+    const out = await runFreshnessScan('openai releases', { client });
+    // Effective times: a = published 11:00, b = captured 10:00.
+    expect(out.items.map((i) => i.url)).toEqual(['https://o/a', 'https://o/b']);
+    expect(out.items[1].publishedAt).toBeUndefined();
+  });
+
   it('falls back to the demo scan when nothing was captured', async () => {
     const client = fakeClient({
       searchAndRead: vi.fn().mockResolvedValue({
@@ -61,6 +94,20 @@ describe('runFreshnessScan', () => {
       const age = Date.now() - Date.parse(item.captureTime ?? '');
       expect(age).toBeGreaterThanOrEqual(0);
       expect(age).toBeLessThan(24 * 60 * 60_000); // within the last day
+    }
+  });
+
+  it('demo scan items carry plausible recent publishedAt values (published before captured)', async () => {
+    vi.stubEnv('VERIFIER_DEMO', '1');
+    const out = await runFreshnessScan('anything', { client: fakeClient({}) });
+    const published = out.items.filter((i) => i.publishedAt);
+    expect(published.length).toBeGreaterThan(0);
+    for (const item of published) {
+      const age = Date.now() - Date.parse(item.publishedAt ?? '');
+      expect(age).toBeGreaterThanOrEqual(0);
+      expect(age).toBeLessThan(24 * 60 * 60_000); // within the last day
+      // A page is published before we capture it.
+      expect(Date.parse(item.publishedAt ?? '')).toBeLessThanOrEqual(Date.parse(item.captureTime ?? ''));
     }
   });
 });

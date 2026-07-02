@@ -7,6 +7,8 @@ export interface ResearchSource {
   title: string;
   url: string;
   capturedISO?: string;
+  /** Best-effort page publish time from Caesar; absent on many pages. */
+  publishedAt?: string;
 }
 
 export interface ResearchResult {

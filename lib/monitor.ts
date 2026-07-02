@@ -5,6 +5,8 @@ export interface FreshnessItem {
   title: string;
   url: string;
   captureTime?: string;
+  /** Best-effort page publish time from Caesar; absent on many pages. */
+  publishedAt?: string;
 }
 
 export interface FreshnessResult {
@@ -38,12 +40,19 @@ export async function runFreshnessScan(
       // never an unread search-only hit with no capture moment.
       if (!url || !c.captureTime || seen.has(url)) continue;
       seen.add(url);
-      items.push({ title: (c.title || url || 'Untitled').trim(), url, captureTime: c.captureTime });
+      items.push({ title: (c.title || url || 'Untitled').trim(), url, captureTime: c.captureTime, publishedAt: c.publishedAt });
     }
-    // Newest captures first; items without a capture time sort to the end.
+    // Newest first by the page's own publish time when Caesar surfaced one
+    // (best-effort), else our capture moment; items with neither parseable
+    // sort to the end.
+    const effectiveTime = (i: FreshnessItem): number => {
+      const published = i.publishedAt ? Date.parse(i.publishedAt) : NaN;
+      if (!Number.isNaN(published)) return published;
+      return i.captureTime ? Date.parse(i.captureTime) : NaN;
+    };
     items.sort((a, b) => {
-      const ta = a.captureTime ? Date.parse(a.captureTime) : NaN;
-      const tb = b.captureTime ? Date.parse(b.captureTime) : NaN;
+      const ta = effectiveTime(a);
+      const tb = effectiveTime(b);
       if (Number.isNaN(ta) && Number.isNaN(tb)) return 0;
       if (Number.isNaN(ta)) return 1;
       if (Number.isNaN(tb)) return -1;
@@ -64,11 +73,14 @@ function demoScan(topic: string): FreshnessResult {
   return {
     topic: topic || 'OpenAI model releases',
     degraded: true,
+    // Published times sit a bit before their captures (a page exists before we
+    // read it); the vendor index page has none, since publish dates are
+    // best-effort and landing pages rarely carry one.
     items: [
       { title: 'OpenAI announces its newest flagship model — OpenAI', url: 'https://openai.com/index/', captureTime: minutesAgo(14) },
-      { title: 'What the latest OpenAI release means for developers — The Verge', url: 'https://www.theverge.com/openai', captureTime: minutesAgo(103) },
-      { title: 'OpenAI updates its API pricing and rate limits — TechCrunch', url: 'https://techcrunch.com/tag/openai/', captureTime: minutesAgo(60 * 16) },
-      { title: 'Benchmarks for the new OpenAI model — Ars Technica', url: 'https://arstechnica.com/ai/', captureTime: minutesAgo(60 * 20) },
+      { title: 'What the latest OpenAI release means for developers — The Verge', url: 'https://www.theverge.com/openai', captureTime: minutesAgo(103), publishedAt: minutesAgo(140) },
+      { title: 'OpenAI updates its API pricing and rate limits — TechCrunch', url: 'https://techcrunch.com/tag/openai/', captureTime: minutesAgo(60 * 16), publishedAt: minutesAgo(60 * 18) },
+      { title: 'Benchmarks for the new OpenAI model — Ars Technica', url: 'https://arstechnica.com/ai/', captureTime: minutesAgo(60 * 20), publishedAt: minutesAgo(60 * 23) },
     ],
   };
 }

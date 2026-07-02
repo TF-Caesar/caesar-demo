@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { summarize, formatSources } from '../research';
+import { summarize, formatSources, receiptLine } from '../research';
 import type { Citation } from '../caesar';
 
 describe('summarize', () => {
@@ -41,5 +41,36 @@ describe('formatSources', () => {
     const lines = formatSources([unread, read1]);
     expect(lines).toHaveLength(1);
     expect(lines[0]).toMatchObject({ index: 1, url: 'https://ap.com/a' });
+  });
+
+  it('carries publishedAt when the citation has one, leaves it undefined otherwise', () => {
+    const published: Citation = { ...read1, publishedAt: '2026-06-20T08:00:00Z' };
+    const lines = formatSources([published, readNoTime]);
+    expect(lines[0].publishedAt).toBe('2026-06-20T08:00:00Z');
+    expect(lines[1].publishedAt).toBeUndefined();
+  });
+});
+
+describe('receiptLine', () => {
+  const now = Date.parse('2026-07-02T12:00:00Z');
+
+  it('counts sources and shows the newest capture as a relative time', () => {
+    const line = receiptLine(
+      [{ capturedISO: '2026-07-02T09:00:00Z' }, { capturedISO: '2026-07-02T11:58:00Z' }],
+      now,
+    );
+    expect(line).toBe('2 sources read · newest capture 2m ago');
+  });
+
+  it('uses the singular for one source', () => {
+    expect(receiptLine([{ capturedISO: '2026-07-02T11:58:00Z' }], now)).toBe('1 source read · newest capture 2m ago');
+  });
+
+  it('omits the newest-capture clause when no capture time exists (never fabricates)', () => {
+    expect(receiptLine([{}, { capturedISO: 'garbage' }], now)).toBe('2 sources read');
+  });
+
+  it('returns undefined when nothing was read', () => {
+    expect(receiptLine([], now)).toBeUndefined();
   });
 });

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import type { ResearchResult } from '../lib/api-research';
+import { receiptLine } from '../lib/research';
 import { safeExternalUrl } from '../lib/url';
 
 const EXAMPLES = ['Who won the 2022 World Cup', 'State of fusion energy 2026'];
@@ -13,6 +14,15 @@ function formatCapture(iso?: string): string | undefined {
   return `captured ${d.toISOString().slice(0, 16).replace('T', ' ')} UTC`;
 }
 
+// publishedAt is best-effort: when it does not parse, fall back to the
+// captured stamp rather than fabricating a publish date.
+function formatPublished(iso?: string): string | undefined {
+  if (!iso) return undefined;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return undefined;
+  return `published ${d.toISOString().slice(0, 10)}`;
+}
+
 export function ResearchPanel() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,6 +30,9 @@ export function ResearchPanel() {
   const [error, setError] = useState<string | null>(null);
   // Monotonic request id: a slow, stale response must never overwrite a newer one.
   const seqRef = useRef(0);
+
+  // Receipt stat line under the briefing; undefined when nothing was read.
+  const receipt = data ? receiptLine(data.sources) : undefined;
 
   async function run(text: string) {
     if (!text.trim() || loading) return;
@@ -128,7 +141,7 @@ export function ResearchPanel() {
               <h2 className="font-display text-[1.1rem] text-ink-mark">Sources</h2>
               <ol className="mt-3 space-y-3">
                 {data.sources.map((src) => {
-                  const captured = formatCapture(src.capturedISO);
+                  const stamp = formatPublished(src.publishedAt) ?? formatCapture(src.capturedISO);
                   const safeUrl = safeExternalUrl(src.url);
                   return (
                     <li key={src.index} className="flex gap-3 text-[13px]">
@@ -147,10 +160,10 @@ export function ResearchPanel() {
                         ) : (
                           <span className="text-[15px] text-ink">{src.title}</span>
                         )}
-                        {captured && (
+                        {stamp && (
                           <>
                             <span aria-hidden="true" className="text-hairline">·</span>
-                            <span className="font-mono text-ink-2">{captured}</span>
+                            <span className="font-mono text-ink-2">{stamp}</span>
                           </>
                         )}
                       </span>
@@ -159,6 +172,10 @@ export function ResearchPanel() {
                 })}
               </ol>
             </section>
+          )}
+
+          {receipt && (
+            <p className="mt-6 font-mono text-[12px] text-ink-2">{receipt}</p>
           )}
         </div>
       )}

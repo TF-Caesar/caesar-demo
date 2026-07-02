@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import type { FreshnessResult } from '../lib/monitor';
+import { relativeTime } from '../lib/time';
 import { safeExternalUrl } from '../lib/url';
 
 const CHIPS = ['OpenAI model releases', 'AI search startups'];
@@ -11,6 +12,14 @@ function formatCapture(iso?: string): string | undefined {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return `captured ${d.toISOString().slice(0, 16).replace('T', ' ')} UTC`;
+}
+
+// publishedAt is best-effort: when it does not parse, fall back to the
+// captured-only stamp rather than fabricating a publish time.
+function formatPublished(iso?: string): string | undefined {
+  if (!iso) return undefined;
+  const rel = relativeTime(iso);
+  return rel ? `published ${rel}` : undefined;
 }
 
 export function MonitorPanel() {
@@ -113,6 +122,7 @@ export function MonitorPanel() {
         <div className="mt-6 space-y-3">
           {data.items.map((item, i) => {
             const captured = formatCapture(item.captureTime);
+            const published = formatPublished(item.publishedAt);
             const safeUrl = safeExternalUrl(item.url);
             return (
               <article
@@ -133,8 +143,22 @@ export function MonitorPanel() {
                 ) : (
                   <span className="text-[15px] leading-relaxed text-ink">{item.title}</span>
                 )}
-                {captured && (
-                  <div className="mt-2 font-mono text-[12px] text-ink-2">{captured}</div>
+                {(published || captured) && (
+                  <div className="mt-2 font-mono text-[12px] text-ink-2">
+                    {published ? (
+                      <>
+                        {published}
+                        {captured && (
+                          <>
+                            <span aria-hidden="true" className="text-hairline"> · </span>
+                            {captured}
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      captured
+                    )}
+                  </div>
                 )}
               </article>
             );

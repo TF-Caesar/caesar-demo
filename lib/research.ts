@@ -1,4 +1,5 @@
 import type { Citation } from './caesar';
+import { relativeTime } from './time';
 
 /**
  * Deterministic, evidence-grounded summarization for the research briefing.
@@ -124,6 +125,8 @@ export interface SourceLine {
   title: string;
   url: string;
   capturedISO?: string;
+  /** Best-effort page publish time from Caesar; absent on many pages. */
+  publishedAt?: string;
 }
 
 /**
@@ -139,5 +142,25 @@ export function formatSources(citations: Citation[]): SourceLine[] {
       title: (c.title || c.canonicalUrl || 'Untitled').trim(),
       url: c.canonicalUrl,
       capturedISO: c.captureTime,
+      publishedAt: c.publishedAt,
     }));
+}
+
+/**
+ * Receipt stat line shown under a briefing: "<N> sources read · newest capture
+ * <relative>". The newest-capture clause comes from real capturedISO values and
+ * is omitted entirely when none parse: the receipt never fabricates a time.
+ * Returns undefined when nothing was read.
+ */
+export function receiptLine(sources: { capturedISO?: string }[], now: number = Date.now()): string | undefined {
+  if (sources.length === 0) return undefined;
+  const label = `${sources.length} ${sources.length === 1 ? 'source' : 'sources'} read`;
+  let newest = -Infinity;
+  for (const s of sources) {
+    const t = s.capturedISO ? Date.parse(s.capturedISO) : NaN;
+    if (!Number.isNaN(t) && t > newest) newest = t;
+  }
+  if (newest === -Infinity) return label;
+  const rel = relativeTime(new Date(newest).toISOString(), now);
+  return rel ? `${label} · newest capture ${rel}` : label;
 }
