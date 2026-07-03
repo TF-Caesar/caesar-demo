@@ -1,4 +1,13 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import Link from 'next/link';
+import { CopyButton } from '../components/CopyButton';
+
+// Read once at module scope: this executes during the static prerender at
+// build time, so the landing page stays a static route. The literal
+// process.cwd() join also lets Next's output file tracing carry the raw file
+// into the standalone build.
+const CAESAR_SOURCE = fs.readFileSync(path.join(process.cwd(), 'lib/caesar.ts'), 'utf8');
 
 /** The real Caesar mark (rounded charcoal chip + ivory twin-spiral) from public/favicon.svg. */
 function CaesarMark() {
@@ -90,6 +99,34 @@ export default function Hub() {
             </Link>
           ))}
         </div>
+      </section>
+
+      <section className="mx-auto mt-16 max-w-measure">
+        <h2 className="font-display text-[1.35rem] text-ink-mark">The whole integration is one file</h2>
+        <p className="mt-2 max-w-[52ch] text-[15px] leading-relaxed text-ink-2">
+          Every demo above talks to Caesar through the same small client: no key, no signup,
+          nothing to configure, copy it into any project.
+        </p>
+
+        <details className="group mt-5 rounded-card border border-bone bg-paper">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 [&::-webkit-details-marker]:hidden">
+            <span className="font-mono text-[11px] text-ink-2">
+              lib/caesar.ts · ~250 lines · zero dependencies beyond the SDK
+            </span>
+            <span className="flex shrink-0 items-center gap-3">
+              <span aria-hidden="true" className="font-mono text-[11px] text-ink-2 group-open:hidden">
+                view
+              </span>
+              <span aria-hidden="true" className="hidden font-mono text-[11px] text-ink-2 group-open:inline">
+                hide
+              </span>
+              <CopyButton text={CAESAR_SOURCE} />
+            </span>
+          </summary>
+          <pre className="overflow-x-auto border-t border-bone px-5 py-4 font-mono text-[11px] leading-relaxed text-ink-2">
+            <code>{CAESAR_SOURCE}</code>
+          </pre>
+        </details>
       </section>
 
       <footer className="mx-auto mt-24 max-w-measure pb-16 pt-10">

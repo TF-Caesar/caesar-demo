@@ -1,4 +1,14 @@
+import type { Metadata } from 'next';
 import { ClaimInput } from '../../components/ClaimInput';
+import { demoShareMeta, firstParam } from '../../lib/og';
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+/** Shared deep links (?q=...) unfurl with the claim on the card. */
+export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
+  const params = await searchParams;
+  return demoShareMeta('verifier', firstParam(params.q));
+}
 
 export default function VerifierPage() {
   return (

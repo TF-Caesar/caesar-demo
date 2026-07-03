@@ -1,4 +1,14 @@
+import type { Metadata } from 'next';
 import { FinderPanel } from '../../components/FinderPanel';
+import { demoShareMeta, firstParam } from '../../lib/og';
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+/** Shared deep links (?q=...) unfurl with the product ask on the card. */
+export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
+  const params = await searchParams;
+  return demoShareMeta('find', firstParam(params.q));
+}
 
 export default function FindPage() {
   return (

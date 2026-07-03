@@ -1,4 +1,14 @@
+import type { Metadata } from 'next';
 import { MonitorPanel } from '../../components/MonitorPanel';
+import { demoShareMeta, firstParam } from '../../lib/og';
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+/** Shared deep links (?topic=..., or ?q=...) unfurl with the topic on the card. */
+export async function generateMetadata({ searchParams }: { searchParams: SearchParams }): Promise<Metadata> {
+  const params = await searchParams;
+  return demoShareMeta('monitor', firstParam(params.topic) ?? firstParam(params.q));
+}
 
 export default function MonitorPage() {
   return (
