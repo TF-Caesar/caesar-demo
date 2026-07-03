@@ -11,8 +11,35 @@ describe('summarize', () => {
         text: 'This page is about gardening and has nothing to do with football. '.repeat(4) },
     ];
     const out = summarize(citations, 'Who won the 2022 FIFA World Cup?', 4);
-    expect(out.join(' ')).toMatch(/Argentina/);
-    expect(out.join(' ')).not.toMatch(/gardening/);
+    expect(out.map((s) => s.text).join(' ')).toMatch(/Argentina/);
+    expect(out.map((s) => s.text).join(' ')).not.toMatch(/gardening/);
+  });
+
+  it('stamps each item with the 1-based read-list index of its origin citation', () => {
+    // The unread hit sits FIRST so raw rank and read-list position diverge:
+    // formatSources drops it and renumbers, and sourceIndex must agree.
+    const citations: Citation[] = [
+      { rank: 1, title: 'Never read', canonicalUrl: 'https://never.com', docId: 'd0' },
+      { rank: 2, title: 'AP', canonicalUrl: 'https://ap.com/a', docId: 'd1',
+        text: 'Argentina won the 2022 FIFA World Cup, defeating France in a penalty shootout. '.repeat(4) },
+      { rank: 3, title: 'BBC', canonicalUrl: 'https://bbc.com/b', docId: 'd2',
+        text: 'Lionel Messi lifted the 2022 World Cup trophy for Argentina. '.repeat(4) },
+    ];
+    const out = summarize(citations, 'Who won the 2022 FIFA World Cup?', 10);
+    const fromAp = out.find((s) => /defeating France/.test(s.text));
+    const fromBbc = out.find((s) => /Messi/.test(s.text));
+    expect(fromAp?.sourceIndex).toBe(1);
+    expect(fromBbc?.sourceIndex).toBe(2);
+  });
+
+  it('never cites a search-only citation: a passage on an unread hit yields no bullet', () => {
+    // No captureTime and no text means the source never appears in the Sources
+    // list, so a bullet extracted from it would carry a dangling [n].
+    const passageOnly: Citation[] = [{
+      rank: 1, title: 'Unread', canonicalUrl: 'https://unread.com', docId: 'd1',
+      passage: 'Argentina won the 2022 FIFA World Cup in Qatar after beating France on penalties.',
+    }];
+    expect(summarize(passageOnly, 'Who won the 2022 FIFA World Cup?', 4)).toEqual([]);
   });
 });
 

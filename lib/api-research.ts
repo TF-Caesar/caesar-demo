@@ -11,9 +11,18 @@ export interface ResearchSource {
   publishedAt?: string;
 }
 
+export interface ResearchSummaryItem {
+  text: string;
+  /**
+   * 1-based index into `sources`: the bullet was extracted from source
+   * [sourceIndex]. Optional so older cached payloads still parse.
+   */
+  sourceIndex?: number;
+}
+
 export interface ResearchResult {
   question: string;
-  summary: string[];
+  summary: ResearchSummaryItem[];
   sources: ResearchSource[];
   degraded: boolean;
 }
@@ -57,11 +66,11 @@ function demoResearch(question: string): ResearchResult {
     question: question || 'Who won the 2022 World Cup?',
     degraded: true,
     summary: [
-      'Argentina won the 2022 FIFA World Cup, beating France in the final on December 18, 2022.',
-      'The match finished 3–3 after extra time and Argentina won 4–2 on penalties at Lusail Stadium in Qatar.',
-      'It was Argentina’s third World Cup title and their first since 1986.',
-      'Lionel Messi was named the tournament’s best player, winning the Golden Ball.',
-      'Kylian Mbappé scored a hat-trick in the final and finished as the tournament’s top scorer with eight goals.',
+      { text: 'Argentina won the 2022 FIFA World Cup, beating France in the final on December 18, 2022.', sourceIndex: 1 },
+      { text: 'The match finished 3–3 after extra time and Argentina won 4–2 on penalties at Lusail Stadium in Qatar.', sourceIndex: 1 },
+      { text: 'It was Argentina’s third World Cup title and their first since 1986.', sourceIndex: 2 },
+      { text: 'Lionel Messi was named the tournament’s best player, winning the Golden Ball.', sourceIndex: 3 },
+      { text: 'Kylian Mbappé scored a hat-trick in the final and finished as the tournament’s top scorer with eight goals.', sourceIndex: 1 },
     ],
     sources: [
       { index: 1, title: '2022 FIFA World Cup final — Wikipedia', url: 'https://en.wikipedia.org/wiki/2022_FIFA_World_Cup_final', capturedISO: minutesAgo(21) },

@@ -1,6 +1,7 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { FreshnessResult } from '../lib/monitor';
 import { relativeTime } from '../lib/time';
 import { safeExternalUrl } from '../lib/url';
@@ -23,12 +24,51 @@ function formatPublished(iso?: string): string | undefined {
 }
 
 export function MonitorPanel() {
+  // useSearchParams needs a Suspense boundary (Next 15) and this panel sits
+  // directly in a server page, so the boundary lives here.
+  return (
+    <Suspense fallback={null}>
+      <MonitorPanelInner />
+    </Suspense>
+  );
+}
+
+function MonitorPanelInner() {
   const [topic, setTopic] = useState('');
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<FreshnessResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   // Monotonic request id: a slow, stale response must never overwrite a newer one.
   const seqRef = useRef(0);
+  const searchParams = useSearchParams();
+  // A deep link auto-runs exactly once; re-renders must never re-fire it.
+  const autoRanRef = useRef(false);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const t = searchParams.get('topic')?.trim();
+    if (!t || autoRanRef.current) return;
+    autoRanRef.current = true;
+    setTopic(t);
+    void run(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  useEffect(() => () => {
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+  }, []);
+
+  async function share() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard can be unavailable (permissions, plain http): fail quietly.
+    }
+  }
 
   async function run(text: string) {
     if (!text.trim() || loading) return;
@@ -57,6 +97,11 @@ export function MonitorPanel() {
       const body = (await res.json()) as FreshnessResult;
       if (seq !== seqRef.current) return;
       setData(body);
+      // Make the result linkable: write the topic into the URL in place,
+      // no navigation and no scroll.
+      const url = new URL(window.location.href);
+      url.searchParams.set('topic', text.trim());
+      window.history.replaceState(null, '', url);
     } catch (err) {
       if (seq !== seqRef.current) return;
       const timedOut = err instanceof Error && (err.name === 'TimeoutError' || err.name === 'AbortError');
@@ -89,6 +134,15 @@ export function MonitorPanel() {
           {loading && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-coral" aria-hidden="true" />}
           {loading ? 'Scanning…' : 'Scan'}
         </button>
+
+        {data && (
+          <button
+            onClick={share}
+            className="shrink-0 rounded-pill border border-hairline bg-surface px-3.5 py-2 text-[13px] text-ink-2 transition-colors duration-editorial ease-editorial hover:border-coral hover:text-coral-deep"
+          >
+            {copied ? 'copied' : 'share'}
+          </button>
+        )}
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2.5">

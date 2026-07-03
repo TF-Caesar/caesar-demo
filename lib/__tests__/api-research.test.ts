@@ -26,11 +26,30 @@ describe('runResearch', () => {
     const searchAndRead = vi.fn().mockResolvedValue({ evidence: 'x', citations: worldCupCites });
     const out = await runResearch('Who won the 2022 World Cup?', { client: fakeClient({ searchAndRead }) });
     expect(out.degraded).toBe(false);
-    expect(out.summary.join(' ')).toMatch(/Argentina/);
+    expect(out.summary.map((s) => s.text).join(' ')).toMatch(/Argentina/);
     expect(out.sources).toHaveLength(1);
     // The regression: passing minScore made the shared client drop unscored
     // results, so a fine API response rendered as "free tier is busy".
     expect(searchAndRead.mock.calls[0][1]).not.toHaveProperty('minScore');
+  });
+
+  it('summary items carry a sourceIndex that points into the numbered sources list', async () => {
+    const searchAndRead = vi.fn().mockResolvedValue({ evidence: 'x', citations: worldCupCites });
+    const out = await runResearch('Who won the 2022 World Cup?', { client: fakeClient({ searchAndRead }) });
+    expect(out.summary.length).toBeGreaterThan(0);
+    expect(out.summary[0].sourceIndex).toBe(1);
+    expect(out.sources[0].index).toBe(1);
+  });
+
+  it('demo fallback bullets carry plausible sourceIndex values within the sources list', async () => {
+    vi.stubEnv('VERIFIER_DEMO', '1');
+    const out = await runResearch('anything', { client: fakeClient({}) });
+    expect(out.summary.length).toBeGreaterThan(0);
+    for (const item of out.summary) {
+      expect(typeof item.text).toBe('string');
+      expect(item.sourceIndex).toBeGreaterThanOrEqual(1);
+      expect(item.sourceIndex).toBeLessThanOrEqual(out.sources.length);
+    }
   });
 
   it("VERIFIER_DEMO='0' does NOT enable demo mode (strict opt-in)", async () => {
