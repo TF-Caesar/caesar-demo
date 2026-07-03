@@ -19,6 +19,19 @@ export interface ClaimResult {
 }
 export interface VerifyResponse { claims: ClaimResult[]; degraded: boolean; tier?: string; }
 
+/**
+ * One NDJSON-able event from the incremental verification engine. `claims`
+ * always arrives first so a UI can render placeholders; each `claim` settles
+ * independently, emitted in completion order but carrying its original index;
+ * `done` closes the run. The engine never yields `error` itself: the
+ * streaming route writes it when a stream dies mid-flight.
+ */
+export type VerifyEvent =
+  | { type: 'claims'; claims: string[] }
+  | { type: 'claim'; index: number; total: number; result: ClaimResult }
+  | { type: 'done'; degraded: boolean; tier?: string }
+  | { type: 'error'; message: string };
+
 const RANK = { VERIFIED: 2, NEEDS_CONTEXT: 1, UNSUPPORTED: 0 } as const;
 type Rankable = keyof typeof RANK;
 
@@ -27,12 +40,36 @@ export function demoModeEnabled(): boolean {
   return ['1', 'true', 'yes', 'on'].includes((process.env.VERIFIER_DEMO ?? '').trim().toLowerCase());
 }
 
-export async function runVerification(
+/**
+ * Stream the canned demo response. Snapshot the claims getter ONCE so the
+ * placeholder texts, the per-claim results, and their capture times all
+ * describe the same instant.
+ */
+async function* demoEvents(): AsyncGenerator<VerifyEvent> {
+  const canned = DEMO_RESPONSE.claims;
+  yield { type: 'claims', claims: canned.map((c) => c.claim) };
+  for (let index = 0; index < canned.length; index++) {
+    yield { type: 'claim', index, total: canned.length, result: canned[index] };
+  }
+  yield { type: 'done', degraded: DEMO_RESPONSE.degraded };
+}
+
+/**
+ * Incremental engine behind both /api/verify routes. Yields the same data
+ * runVerification() assembles, one event at a time: the fallback paths (demo
+ * mode, extraction failure, every claim failing) stream the canned response
+ * by REPLACING the claim set with a fresh `claims` event.
+ */
+export async function* runVerificationEvents(
   input: string,
   deps: { client?: CaesarClient } = {},
-): Promise<VerifyResponse> {
-  if (demoModeEnabled()) return DEMO_RESPONSE;
+): AsyncGenerator<VerifyEvent> {
+  if (demoModeEnabled()) {
+    yield* demoEvents();
+    return;
+  }
   const client = deps.client ?? new CaesarClient();
+  let claims: string[];
   try {
     // If the input is a bare URL, read the page with Caesar and pull claims from
     // the captured text — otherwise we'd just search the URL string itself.
@@ -44,26 +81,88 @@ export async function runVerification(
         if (doc.text && doc.text.trim()) toAnalyze = doc.text;
       } catch { /* page unreadable — fall back to treating the URL as the query */ }
     }
-    const claims = (await extractClaims(toAnalyze)).slice(0, 6);
-    if (claims.length === 0) return { claims: [], degraded: false };
-    // Per-claim isolation: one throttled claim must not throw away the others'
-    // completed verdicts. Concurrency 2 (x3 reads inside searchAndRead) keeps the
-    // burst small enough that we don't self-induce the 429s in the first place.
-    let tier: string | undefined;
-    const settled = await mapLimit(claims, 2, async (claim): Promise<ClaimResult | null> => {
-      try {
-        const one = await verifyOneClaim(claim, client);
-        if (one.tier) tier = one.tier; // same account for every claim, any response can report it
-        return one.result;
-      } catch {
-        return null; // this claim failed (rate limit / timeout); keep the rest
-      }
-    });
-    const results = settled.filter((r): r is ClaimResult => r !== null);
-    if (results.length === 0 && claims.length > 0) return DEMO_RESPONSE;
-    return { claims: results, degraded: results.length < claims.length, ...(tier ? { tier } : {}) };
+    claims = (await extractClaims(toAnalyze)).slice(0, 6);
   } catch {
-    return DEMO_RESPONSE;
+    yield* demoEvents(); // extraction failed outright: stream the canned response instead
+    return;
+  }
+
+  yield { type: 'claims', claims };
+  if (claims.length === 0) {
+    yield { type: 'done', degraded: false };
+    return;
+  }
+
+  // Per-claim isolation: one throttled claim must not throw away the others'
+  // completed verdicts. Concurrency 2 (x3 reads inside searchAndRead) keeps the
+  // burst small enough that we don't self-induce the 429s in the first place.
+  // Workers push settled slots into a queue (yield cannot cross a callback
+  // boundary), so verdicts stream out in completion order while each event
+  // still carries its original index.
+  let tier: string | undefined;
+  const queue: { index: number; result: ClaimResult | null }[] = [];
+  let wake: (() => void) | null = null;
+  const running = mapLimit(claims.map((claim, index) => ({ claim, index })), 2, async ({ claim, index }) => {
+    let result: ClaimResult | null = null;
+    try {
+      const one = await verifyOneClaim(claim, client);
+      if (one.tier) tier = one.tier; // same account for every claim, any response can report it
+      result = one.result;
+    } catch {
+      result = null; // this claim failed (rate limit / timeout); keep the rest
+    }
+    queue.push({ index, result });
+    wake?.();
+    wake = null;
+  });
+
+  const results: (ClaimResult | null)[] = new Array(claims.length).fill(null);
+  for (let settledCount = 0; settledCount < claims.length; settledCount++) {
+    while (queue.length === 0) {
+      await new Promise<void>((resolve) => { wake = resolve; });
+    }
+    const { index, result } = queue.shift()!;
+    if (result) {
+      results[index] = result;
+      yield { type: 'claim', index, total: claims.length, result };
+    }
+  }
+  await running; // every worker already pushed; this only surfaces unexpected rejections
+
+  const succeeded = results.filter((r): r is ClaimResult => r !== null);
+  if (succeeded.length === 0) {
+    yield* demoEvents(); // every claim failed: stream the canned response instead
+    return;
+  }
+  yield { type: 'done', degraded: succeeded.length < claims.length, ...(tier ? { tier } : {}) };
+}
+
+export async function runVerification(
+  input: string,
+  deps: { client?: CaesarClient } = {},
+): Promise<VerifyResponse> {
+  // Return the shared fixture BY REFERENCE in demo mode, exactly as before:
+  // callers (and tests) compare against DEMO_RESPONSE itself.
+  if (demoModeEnabled()) return DEMO_RESPONSE;
+  try {
+    let slots: (ClaimResult | null)[] = [];
+    let degraded = false;
+    let tier: string | undefined;
+    for await (const event of runVerificationEvents(input, deps)) {
+      if (event.type === 'claims') {
+        // A later `claims` event replaces the set wholesale (canned fallback).
+        slots = new Array<ClaimResult | null>(event.claims.length).fill(null);
+      } else if (event.type === 'claim') {
+        slots[event.index] = event.result;
+      } else if (event.type === 'done') {
+        degraded = event.degraded;
+        tier = event.tier;
+      }
+    }
+    const claims = slots.filter((r): r is ClaimResult => r !== null);
+    return { claims, degraded, ...(tier ? { tier } : {}) };
+  } catch {
+    return DEMO_RESPONSE; // the engine itself failed: same canned fallback as before
   }
 }
 
