@@ -185,6 +185,50 @@ describe('receipt plumbing', () => {
     expect(r.score).toBe(0.8);
   });
 
+  it('carries passage offsets and section heading alongside a pinned passage', async () => {
+    const client = fakeClient({
+      searchAndRead: vi.fn().mockResolvedValue({
+        evidence: 'x', searchId: 's-1',
+        citations: [{
+          rank: 1, title: 'NIF', canonicalUrl: 'https://llnl.gov/a', docId: 'd1',
+          captureId: 'cap-11112222', captureTime: '2026-06-21T14:03:00Z',
+          passageId: 'psg-aaaabbbb', passageStart: 812, passageEnd: 1054, passageSection: 'Ignition results',
+          passage: 'On December 5, 2022 the National Ignition Facility achieved fusion ignition.',
+        }],
+      }),
+      sendFeedback: vi.fn(),
+    });
+    const out = await runVerification('The National Ignition Facility achieved fusion ignition in 2022.', { client });
+    const r = out.claims[0];
+    expect(r.verdict).toBe('VERIFIED');
+    expect(r.passageStart).toBe(812);
+    expect(r.passageEnd).toBe(1054);
+    expect(r.passageSection).toBe('Ignition results');
+  });
+
+  it('omits offsets and section when the quote fell back to a text snippet (no pinned passage)', async () => {
+    const client = fakeClient({
+      searchAndRead: vi.fn().mockResolvedValue({
+        evidence: 'x', searchId: 's-1',
+        citations: [{
+          rank: 1, title: 'LLNL', canonicalUrl: 'https://llnl.gov/a', docId: 'd1',
+          captureId: 'cap-11112222', captureTime: '2026-06-21T14:03:00Z',
+          // Coordinates on the citation, but no pinned passage: a snippet
+          // fallback has no capture coordinates to claim.
+          passageStart: 10, passageEnd: 90, passageSection: 'Intro',
+          text: 'Intro paragraph. On December 5, 2022 the National Ignition Facility achieved fusion ignition for the first time. More text.',
+        }],
+      }),
+      sendFeedback: vi.fn(),
+    });
+    const out = await runVerification('The National Ignition Facility achieved fusion ignition in 2022.', { client });
+    const r = out.claims[0];
+    expect(r.verdict).toBe('VERIFIED');
+    expect(r.passageStart).toBeUndefined();
+    expect(r.passageEnd).toBeUndefined();
+    expect(r.passageSection).toBeUndefined();
+  });
+
   it('never fabricates publishedAt: absent on the citation means absent on the result', async () => {
     const client = fakeClient({
       searchAndRead: vi.fn().mockResolvedValue({

@@ -7,6 +7,8 @@ export interface FreshnessItem {
   captureTime?: string;
   /** Best-effort page publish time from Caesar; absent on many pages. */
   publishedAt?: string;
+  /** How many captures Caesar holds for this document; 1 on a first-ever read. */
+  captureCount?: number;
 }
 
 export interface FreshnessResult {
@@ -31,7 +33,9 @@ export async function runFreshnessScan(
   if (demoModeEnabled()) return demoScan(t);
   const client = deps.client ?? new CaesarClient();
   try {
-    const { citations } = await client.searchAndRead(t, { maxResults: 12, readTopN: 6 });
+    // includeCaptureHistory rides on the same read call: the capture timeline
+    // is the radar's depth signal (how often Caesar has seen each page).
+    const { citations } = await client.searchAndRead(t, { maxResults: 12, readTopN: 6, includeCaptureHistory: true });
     const seen = new Set<string>();
     const items: FreshnessItem[] = [];
     for (const c of citations) {
@@ -41,7 +45,7 @@ export async function runFreshnessScan(
       // never an unread search-only hit with no capture moment.
       if (!url || !c.captureTime || seen.has(url)) continue;
       seen.add(url);
-      items.push({ title: (c.title || url || 'Untitled').trim(), url, captureTime: c.captureTime, publishedAt: c.publishedAt });
+      items.push({ title: (c.title || url || 'Untitled').trim(), url, captureTime: c.captureTime, publishedAt: c.publishedAt, captureCount: c.captureCount });
     }
     // Newest first by the page's own publish time when Caesar surfaced one
     // (best-effort), else our capture moment; items with neither parseable
@@ -76,12 +80,14 @@ function demoScan(topic: string): FreshnessResult {
     degraded: true,
     // Published times sit a bit before their captures (a page exists before we
     // read it); the vendor index page has none, since publish dates are
-    // best-effort and landing pages rarely carry one.
+    // best-effort and landing pages rarely carry one. Capture counts mirror
+    // reality too: index pages get re-captured constantly, while a fresh
+    // article may have been seen exactly once (and stays quiet in the UI).
     items: [
-      { title: 'OpenAI announces its newest flagship model — OpenAI', url: 'https://openai.com/index/', captureTime: minutesAgo(14) },
-      { title: 'What the latest OpenAI release means for developers — The Verge', url: 'https://www.theverge.com/openai', captureTime: minutesAgo(103), publishedAt: minutesAgo(140) },
-      { title: 'OpenAI updates its API pricing and rate limits — TechCrunch', url: 'https://techcrunch.com/tag/openai/', captureTime: minutesAgo(60 * 16), publishedAt: minutesAgo(60 * 18) },
-      { title: 'Benchmarks for the new OpenAI model — Ars Technica', url: 'https://arstechnica.com/ai/', captureTime: minutesAgo(60 * 20), publishedAt: minutesAgo(60 * 23) },
+      { title: 'OpenAI announces its newest flagship model — OpenAI', url: 'https://openai.com/index/', captureTime: minutesAgo(14), captureCount: 12 },
+      { title: 'What the latest OpenAI release means for developers — The Verge', url: 'https://www.theverge.com/openai', captureTime: minutesAgo(103), publishedAt: minutesAgo(140), captureCount: 3 },
+      { title: 'OpenAI updates its API pricing and rate limits — TechCrunch', url: 'https://techcrunch.com/tag/openai/', captureTime: minutesAgo(60 * 16), publishedAt: minutesAgo(60 * 18), captureCount: 2 },
+      { title: 'Benchmarks for the new OpenAI model — Ars Technica', url: 'https://arstechnica.com/ai/', captureTime: minutesAgo(60 * 20), publishedAt: minutesAgo(60 * 23), captureCount: 1 },
     ],
   };
 }

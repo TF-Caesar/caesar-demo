@@ -16,6 +16,15 @@ export interface ClaimResult {
   captureId?: string;
   /** Present ONLY when `passage` is a pinned Caesar passage, not a snippet fallback from read text. */
   passageId?: string;
+  /**
+   * Character range of the pinned passage inside the RAW captured document
+   * text (receipt coordinates from Caesar's include_offsets), plus the section
+   * heading it sits under when the page exposes one. Present only alongside
+   * passageId, same rule as above.
+   */
+  passageStart?: number;
+  passageEnd?: number;
+  passageSection?: string;
 }
 export interface VerifyResponse { claims: ClaimResult[]; degraded: boolean; tier?: string; }
 
@@ -171,12 +180,20 @@ export async function runVerification(
  * only when the displayed quote IS the pinned Caesar passage: a snippet
  * fallback from read text must not masquerade as passage provenance.
  */
-function receiptOf(c: Citation): Pick<ClaimResult, 'score' | 'publishedAt' | 'captureId' | 'passageId'> {
+function receiptOf(
+  c: Citation,
+): Pick<ClaimResult, 'score' | 'publishedAt' | 'captureId' | 'passageId' | 'passageStart' | 'passageEnd' | 'passageSection'> {
+  const pinned = Boolean(c.passage && c.passageId);
   return {
     ...(c.score != null ? { score: c.score } : {}),
     ...(c.publishedAt ? { publishedAt: c.publishedAt } : {}),
     ...(c.captureId ? { captureId: c.captureId } : {}),
-    ...(c.passage && c.passageId ? { passageId: c.passageId } : {}),
+    ...(pinned ? { passageId: c.passageId } : {}),
+    // Offsets and section ride only with a pinned passage: a snippet fallback
+    // has no capture coordinates to claim.
+    ...(pinned && c.passageStart != null ? { passageStart: c.passageStart } : {}),
+    ...(pinned && c.passageEnd != null ? { passageEnd: c.passageEnd } : {}),
+    ...(pinned && c.passageSection ? { passageSection: c.passageSection } : {}),
   };
 }
 

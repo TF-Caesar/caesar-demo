@@ -23,6 +23,13 @@ function formatPublished(iso?: string): string | undefined {
   return rel ? `published ${rel}` : undefined;
 }
 
+// The capture timeline earns a line only once Caesar has seen the page more
+// than once: "seen 1 time" is already implied by the capture stamp itself.
+function formatSeen(count?: number): string | undefined {
+  if (count == null || count <= 1) return undefined;
+  return `seen ${count} times`;
+}
+
 export function MonitorPanel() {
   // useSearchParams needs a Suspense boundary (Next 15) and this panel sits
   // directly in a server page, so the boundary lives here.
@@ -175,8 +182,13 @@ function MonitorPanelInner() {
       {data && data.items.length > 0 && (
         <div className="mt-6 space-y-3">
           {data.items.map((item, i) => {
-            const captured = formatCapture(item.captureTime);
-            const published = formatPublished(item.publishedAt);
+            // One dim receipt line per item, joined with hairline dots; each
+            // stamp appears only when its field actually came back.
+            const stamps = [
+              formatPublished(item.publishedAt),
+              formatCapture(item.captureTime),
+              formatSeen(item.captureCount),
+            ].filter((s): s is string => Boolean(s));
             const safeUrl = safeExternalUrl(item.url);
             return (
               <article
@@ -197,21 +209,14 @@ function MonitorPanelInner() {
                 ) : (
                   <span className="text-[15px] leading-relaxed text-ink">{item.title}</span>
                 )}
-                {(published || captured) && (
+                {stamps.length > 0 && (
                   <div className="mt-2 font-mono text-[12px] text-ink-2">
-                    {published ? (
-                      <>
-                        {published}
-                        {captured && (
-                          <>
-                            <span aria-hidden="true" className="text-hairline"> · </span>
-                            {captured}
-                          </>
-                        )}
-                      </>
-                    ) : (
-                      captured
-                    )}
+                    {stamps.map((stamp, j) => (
+                      <span key={stamp}>
+                        {j > 0 && <span aria-hidden="true" className="text-hairline"> · </span>}
+                        {stamp}
+                      </span>
+                    ))}
                   </div>
                 )}
               </article>

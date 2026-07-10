@@ -129,6 +129,73 @@ describe('provenance metadata (published_at, content_digest, rate limit)', () =>
   });
 });
 
+describe('receipt surface (search_queries, index, offsets, capture history)', () => {
+  it('search passes searchQueries through extraBody and maps the serving index', async () => {
+    searchMock.mockResolvedValue({ results: [{ rank: 1, title: 'T', canonical_url: 'https://x.com/a', doc_id: 'd1', snippet: 's', index: 'workspace' }] });
+    const r = await new CaesarClient().search('best laptop', { searchQueries: ['laptop buy', 'laptop price'] });
+    const [, opts] = searchMock.mock.calls[0];
+    expect(opts.extraBody.search_queries).toEqual(['laptop buy', 'laptop price']);
+    expect(r.results[0].index).toBe('workspace');
+  });
+
+  it('read maps passage offsets + section heading and returns the capture timeline when asked', async () => {
+    readMock.mockResolvedValue({
+      doc: { doc_id: 'd1', canonical_url: 'https://x.com/a' },
+      content: { text: 'full text' },
+      passages: [{ passage_id: 'p1', text: 'a passage', char_start: 812, char_end: 1054, section_heading: 'Results' }],
+      provenance: { capture_id: 'cap2', capture_time: '2026-07-02T00:00:00Z' },
+      capture_history: [
+        { capture_id: 'cap2', capture_time: '2026-07-02T00:00:00Z', content_digest: 'sha256:b' },
+        { capture_id: 'cap1', capture_time: '2026-06-21T14:03:00Z' },
+      ],
+    });
+    const d = await new CaesarClient().read('https://x.com/a', { query: 'q', includeCaptureHistory: true });
+    const [, opts] = readMock.mock.calls[0];
+    expect(opts.include).toContain('capture_history');
+    expect(d.passages[0]).toEqual({ passageId: 'p1', text: 'a passage', charStart: 812, charEnd: 1054, sectionHeading: 'Results' });
+    expect(d.captureHistory).toEqual([
+      { captureId: 'cap2', captureTime: '2026-07-02T00:00:00Z', contentDigest: 'sha256:b' },
+      { captureId: 'cap1', captureTime: '2026-06-21T14:03:00Z' },
+    ]);
+  });
+
+  it('offsets stay absent on a first-ever capture, and the timeline is not requested by default', async () => {
+    readMock.mockResolvedValue({
+      content: { text: 'full text' },
+      passages: [{ passage_id: 'p1', text: 'a passage' }],
+    });
+    const d = await new CaesarClient().read('https://x.com/a', { query: 'q' });
+    const [, opts] = readMock.mock.calls[0];
+    expect(opts.include).not.toContain('capture_history');
+    expect(d.passages[0].charStart).toBeUndefined();
+    expect(d.passages[0].sectionHeading).toBeUndefined();
+    expect(d.captureHistory).toBeUndefined();
+  });
+
+  it('searchAndRead stamps citations with receipt coordinates, serving index, and captureCount', async () => {
+    searchMock.mockResolvedValue({ search_id: 's1', results: [{ rank: 1, title: 'T1', canonical_url: 'https://x.com/1', doc_id: 'd1', snippet: 's1', index: 'web' }] });
+    readMock.mockResolvedValue({
+      doc: { doc_id: 'd1', canonical_url: 'https://x.com/1' },
+      content: { text: 'long body '.repeat(40) },
+      passages: [{ passage_id: 'p1', text: 'the quantum computer milestone announcement', char_start: 64, char_end: 108, section_heading: 'Milestones' }],
+      provenance: { capture_id: 'cap1', capture_time: '2026-06-21T14:03:00Z' },
+      capture_history: [
+        { capture_id: 'cap1', capture_time: '2026-06-21T14:03:00Z' },
+        { capture_id: 'cap0', capture_time: '2026-06-01T00:00:00Z' },
+      ],
+    });
+    const r = await new CaesarClient().searchAndRead('quantum computer milestone', { readTopN: 1, includeCaptureHistory: true });
+    const c = r.citations[0];
+    expect(c.passageStart).toBe(64);
+    expect(c.passageEnd).toBe(108);
+    expect(c.passageSection).toBe('Milestones');
+    expect(c.index).toBe('web');
+    expect(c.captureCount).toBe(2);
+    // ... and the underlying read actually asked for the timeline.
+    expect(readMock.mock.calls[0][1].include).toContain('capture_history');
+  });
+});
+
 describe('CaesarClient.feedback', () => {
   it('sends fire-and-forget feedback with snake_case ids', async () => {
     feedbackMock.mockResolvedValue({ feedback_id: 'f1' });

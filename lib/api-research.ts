@@ -9,6 +9,11 @@ export interface ResearchSource {
   capturedISO?: string;
   /** Best-effort page publish time from Caesar; absent on many pages. */
   publishedAt?: string;
+  /** Receipt coordinates of the cited passage in the RAW captured text; best-effort (see lib/research.ts). */
+  passageStart?: number;
+  passageEnd?: number;
+  /** Section heading the cited passage sits under, when the page exposes one. */
+  passageSection?: string;
 }
 
 export interface ResearchSummaryItem {

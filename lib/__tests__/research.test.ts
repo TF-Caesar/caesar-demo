@@ -76,6 +76,17 @@ describe('formatSources', () => {
     expect(lines[0].publishedAt).toBe('2026-06-20T08:00:00Z');
     expect(lines[1].publishedAt).toBeUndefined();
   });
+
+  it('carries the cited passage receipt coordinates (offsets + section) when present, absent otherwise', () => {
+    const located: Citation = { ...read1, passageStart: 812, passageEnd: 1054, passageSection: 'Results' };
+    const lines = formatSources([located, readNoTime]);
+    expect(lines[0]).toMatchObject({ passageStart: 812, passageEnd: 1054, passageSection: 'Results' });
+    // Offsets are best-effort upstream (absent on a first-ever capture):
+    // a citation without them yields a source line without them.
+    expect(lines[1].passageStart).toBeUndefined();
+    expect(lines[1].passageEnd).toBeUndefined();
+    expect(lines[1].passageSection).toBeUndefined();
+  });
 });
 
 describe('receiptLine', () => {

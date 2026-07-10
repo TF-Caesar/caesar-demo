@@ -11,6 +11,8 @@ The hosted demos are free to use, no signup: the server holds the Caesar API key
 - **Monitor** (`/monitor`): name a topic and see the freshest captured items, newest first, a freshness radar for what's new right now.
 - **Finder** (`/find`): name a product or describe the one you're picturing; Caesar identifies it and finds live retailer listings, each with a capture timestamp.
 
+Every panel keeps quiet receipts, and where Caesar returns them, those receipts are character-precise: the exact character range and section of the quoted passage in the captured document, plus how many times the page has been captured.
+
 The hub lives at `/` and links to all four.
 
 ## Run it locally

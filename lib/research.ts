@@ -152,6 +152,15 @@ export interface SourceLine {
   capturedISO?: string;
   /** Best-effort page publish time from Caesar; absent on many pages. */
   publishedAt?: string;
+  /**
+   * Character range of the cited passage inside the RAW captured document
+   * text (receipt coordinates). Best-effort: absent on a document's
+   * first-ever capture and on snippet fallbacks, so render only when present.
+   */
+  passageStart?: number;
+  passageEnd?: number;
+  /** Section heading the cited passage sits under, when the page exposes one. */
+  passageSection?: string;
 }
 
 /**
@@ -168,6 +177,9 @@ export function formatSources(citations: Citation[]): SourceLine[] {
       url: c.canonicalUrl,
       capturedISO: c.captureTime,
       publishedAt: c.publishedAt,
+      passageStart: c.passageStart,
+      passageEnd: c.passageEnd,
+      passageSection: c.passageSection,
     }));
 }
 

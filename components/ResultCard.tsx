@@ -54,6 +54,11 @@ function receiptLines(r: ClaimResult, tier?: string): string[] {
   if (r.publishedAt) lines.push(`published ${publishedDate(r.publishedAt)}`);
   if (typeof r.score === 'number') lines.push(`relevance ${r.score.toFixed(2)}`);
   if (r.passageId) lines.push(`passage ${r.passageId.slice(0, 8)}`);
+  // Receipt coordinates of the quoted passage inside the captured document.
+  // Best-effort upstream (absent on a first-ever capture): render only when
+  // Caesar returned both ends of the range.
+  if (r.passageStart != null && r.passageEnd != null) lines.push(`chars ${r.passageStart}-${r.passageEnd} of the capture`);
+  if (r.passageSection) lines.push(`section "${r.passageSection}"`);
   if (tier) lines.push(`${tier} tier`);
   return lines;
 }

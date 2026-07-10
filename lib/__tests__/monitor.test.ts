@@ -61,6 +61,21 @@ describe('runFreshnessScan', () => {
     expect(out.items[1].publishedAt).toBeUndefined();
   });
 
+  it('requests the capture timeline and carries captureCount through to items', async () => {
+    const searchAndRead = vi.fn().mockResolvedValue({
+      evidence: 'x',
+      citations: [
+        { rank: 1, title: 'Deep archive', canonicalUrl: 'https://o/a', docId: 'a', captureTime: '2026-06-22T09:00:00Z', captureCount: 7 },
+        { rank: 2, title: 'First capture', canonicalUrl: 'https://o/b', docId: 'b', captureTime: '2026-06-21T09:00:00Z' },
+      ],
+    });
+    const out = await runFreshnessScan('openai releases', { client: fakeClient({ searchAndRead }) });
+    // The timeline rides on the same read call; the scan must actually ask for it.
+    expect(searchAndRead.mock.calls[0][1]).toMatchObject({ includeCaptureHistory: true });
+    expect(out.items[0].captureCount).toBe(7);
+    expect(out.items[1].captureCount).toBeUndefined(); // absent upstream stays absent
+  });
+
   it('falls back to the demo scan when nothing was captured', async () => {
     const client = fakeClient({
       searchAndRead: vi.fn().mockResolvedValue({
@@ -108,6 +123,18 @@ describe('runFreshnessScan', () => {
       expect(age).toBeLessThan(24 * 60 * 60_000); // within the last day
       // A page is published before we capture it.
       expect(Date.parse(item.publishedAt ?? '')).toBeLessThanOrEqual(Date.parse(item.captureTime ?? ''));
+    }
+  });
+
+  it('demo scan items carry plausible capture counts, including a deep archive and a first capture', async () => {
+    vi.stubEnv('VERIFIER_DEMO', '1');
+    const out = await runFreshnessScan('anything', { client: fakeClient({}) });
+    // At least one item exercises the visible "seen N times" path (N > 1) and
+    // at least one stays quiet (N = 1), so the fallback shows both states.
+    expect(out.items.some((i) => (i.captureCount ?? 0) > 1)).toBe(true);
+    expect(out.items.some((i) => i.captureCount === 1)).toBe(true);
+    for (const item of out.items) {
+      expect(item.captureCount).toBeGreaterThanOrEqual(1);
     }
   });
 });

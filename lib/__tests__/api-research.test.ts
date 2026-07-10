@@ -33,6 +33,25 @@ describe('runResearch', () => {
     expect(searchAndRead.mock.calls[0][1]).not.toHaveProperty('minScore');
   });
 
+  it('sources carry passage offsets and section heading when the cited passages have them', async () => {
+    const located: Citation[] = [{
+      ...worldCupCites[0],
+      passageStart: 812, passageEnd: 1054, passageSection: 'Final',
+    }];
+    const searchAndRead = vi.fn().mockResolvedValue({ evidence: 'x', citations: located });
+    const out = await runResearch('Who won the 2022 World Cup?', { client: fakeClient({ searchAndRead }) });
+    expect(out.degraded).toBe(false);
+    expect(out.sources[0]).toMatchObject({ passageStart: 812, passageEnd: 1054, passageSection: 'Final' });
+  });
+
+  it('sources without receipt coordinates stay clean: no offsets, no section', async () => {
+    const searchAndRead = vi.fn().mockResolvedValue({ evidence: 'x', citations: worldCupCites });
+    const out = await runResearch('Who won the 2022 World Cup?', { client: fakeClient({ searchAndRead }) });
+    expect(out.sources[0].passageStart).toBeUndefined();
+    expect(out.sources[0].passageEnd).toBeUndefined();
+    expect(out.sources[0].passageSection).toBeUndefined();
+  });
+
   it('summary items carry a sourceIndex that points into the numbered sources list', async () => {
     const searchAndRead = vi.fn().mockResolvedValue({ evidence: 'x', citations: worldCupCites });
     const out = await runResearch('Who won the 2022 World Cup?', { client: fakeClient({ searchAndRead }) });

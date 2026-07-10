@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import type { ResearchResult } from '../lib/api-research';
+import type { ResearchResult, ResearchSource } from '../lib/api-research';
 import { receiptLine } from '../lib/research';
 import { safeExternalUrl } from '../lib/url';
 
@@ -22,6 +22,16 @@ function formatPublished(iso?: string): string | undefined {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return undefined;
   return `published ${d.toISOString().slice(0, 10)}`;
+}
+
+// Where the cited passage sits in the captured document: its section heading
+// and character range. Both are best-effort upstream (absent on a document's
+// first-ever capture), so the line shows only what Caesar returned.
+function formatPassageLocation(src: ResearchSource): string | undefined {
+  const parts: string[] = [];
+  if (src.passageSection) parts.push(src.passageSection);
+  if (src.passageStart != null && src.passageEnd != null) parts.push(`chars ${src.passageStart}-${src.passageEnd}`);
+  return parts.length > 0 ? parts.join(' · ') : undefined;
 }
 
 export function ResearchPanel() {
@@ -201,6 +211,7 @@ function ResearchPanelInner() {
               <ol className="mt-3 space-y-3">
                 {data.sources.map((src) => {
                   const stamp = formatPublished(src.publishedAt) ?? formatCapture(src.capturedISO);
+                  const location = formatPassageLocation(src);
                   const safeUrl = safeExternalUrl(src.url);
                   return (
                     <li key={src.index} className="flex gap-3 text-[13px]">
@@ -223,6 +234,12 @@ function ResearchPanelInner() {
                           <>
                             <span aria-hidden="true" className="text-hairline">·</span>
                             <span className="font-mono text-ink-2">{stamp}</span>
+                          </>
+                        )}
+                        {location && (
+                          <>
+                            <span aria-hidden="true" className="text-hairline">·</span>
+                            <span className="font-mono text-ink-2">{location}</span>
                           </>
                         )}
                       </span>
