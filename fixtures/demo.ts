@@ -5,7 +5,7 @@ export const DEMO_EXAMPLES: { label: string; input: string }[] = [
   { label: 'GPT-4 release', input: 'OpenAI released GPT-4 in March 2023.' },
 ];
 
-// Shown when the free tier is busy (and in VERIFIER_DEMO mode). Covers all three verdicts.
+// Shown when live search is unavailable (and in VERIFIER_DEMO mode). Covers all three verdicts.
 // Demo capture times are relative so the fallback never displays months-old
 // "freshness": the verdicts are canned, and a stale timestamp would undercut
 // the whole "captured at a moment" premise. `claims` is a getter (not a

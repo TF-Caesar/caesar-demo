@@ -15,7 +15,7 @@ export const OG_COPY: Record<OgPage, { label: string; title: string; accent: str
   research: { label: 'Research', title: 'Research anything, with receipts.', accent: '#6E5F8A' },
   monitor: { label: 'Monitor', title: 'What is new on a topic, right now.', accent: '#F97554' },
   find: { label: 'Finder', title: 'Find the product, and where to buy it.', accent: '#7A6F66' },
-  hub: { label: 'Four demos', title: 'Free search, four ways.', accent: '#333230' },
+  hub: { label: 'Four demos', title: 'Live search, four ways.', accent: '#333230' },
 };
 
 /** Exact-match a page id from a query param; anything else falls back to hub. */

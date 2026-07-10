@@ -53,8 +53,8 @@ export default function FindPage() {
             className="underline decoration-hairline underline-offset-4 transition-colors duration-editorial ease-editorial hover:text-ink hover:decoration-ink"
           >
             Caesar search
-          </a>{' '}
-          — free, no signup. Every result is a live page Caesar read and captured, with a timestamp.
+          </a>
+          . Free to use, no signup: every result is a live page Caesar read and captured, with a timestamp.
         </p>
       </footer>
     </main>

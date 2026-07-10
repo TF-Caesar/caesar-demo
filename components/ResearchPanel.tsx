@@ -91,7 +91,7 @@ function ResearchPanelInner() {
         if (seq !== seqRef.current) return;
         setError(
           res.status === 429
-            ? 'Questions are coming in faster than the free tier allows. Wait a moment and try again.'
+            ? 'Questions are coming in faster than this demo allows. Wait a moment and try again.'
             : res.status === 413
               ? 'That question is too large. Try a shorter one.'
               : 'Something went wrong on our side. Try again in a moment.',
@@ -170,7 +170,7 @@ function ResearchPanelInner() {
       {data?.degraded && (
         <div className="mt-7 inline-flex items-center gap-2 rounded-pill bg-surface px-3 py-1.5 text-[12px] text-ink-2">
           <span className="h-1.5 w-1.5 rounded-full bg-lilac" aria-hidden="true" />
-          Showing a cached example — the free tier is busy right now.
+          Live search is unavailable right now: showing a cached example.
         </div>
       )}
 

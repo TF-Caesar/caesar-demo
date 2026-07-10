@@ -104,8 +104,8 @@ export default function Hub() {
       <section className="mx-auto mt-16 max-w-measure">
         <h2 className="font-display text-[1.35rem] text-ink-mark">The whole integration is one file</h2>
         <p className="mt-2 max-w-[52ch] text-[15px] leading-relaxed text-ink-2">
-          Every demo above talks to Caesar through the same small client: no key, no signup,
-          nothing to configure, copy it into any project.
+          Every demo above talks to Caesar through the same small client: one key in one env
+          var (CAESAR_SEARCH_API_KEY), copy it into any project.
         </p>
 
         <details className="group mt-5 rounded-card border border-bone bg-paper">
@@ -139,8 +139,8 @@ export default function Hub() {
             className="underline decoration-hairline underline-offset-4 transition-colors duration-editorial ease-editorial hover:text-ink hover:decoration-ink"
           >
             Caesar search
-          </a>{' '}
-          — free, no signup. The receipt is the source, captured at a moment.
+          </a>
+          . These demos are free to use, no signup: the receipt is the source, captured at a moment.
         </p>
       </footer>
     </main>

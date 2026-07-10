@@ -8,8 +8,9 @@ export const maxDuration = 60;
 const MAX_BODY_BYTES = 32_000; // a claim/paragraph/URL is tiny; reject abuse early
 
 export async function POST(req: Request) {
-  // Rate-limit before any Caesar or Anthropic work: one anonymous POST fans
-  // out to several upstream calls, so an unthrottled loop drains the quota.
+  // Rate-limit before any Caesar or Anthropic work: one visitor POST fans out
+  // to several upstream calls, each billed to the server's keys, so an
+  // unthrottled loop drains the credits.
   const limit = rateLimit(clientIp(req));
   if (!limit.ok) {
     const retryAfterSeconds = limit.retryAfterSeconds ?? 60;

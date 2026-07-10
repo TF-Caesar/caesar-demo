@@ -15,8 +15,9 @@ const MAX_BODY_BYTES = 32_000; // a product name or short description is tiny; r
  * would leave the client narrating silence.
  */
 export async function POST(req: Request) {
-  // Rate-limit before any Caesar work: one anonymous POST fans out to several
-  // upstream calls, so an unthrottled loop drains the quota.
+  // Rate-limit before any Caesar work: one visitor POST fans out to several
+  // upstream calls, each billed to the server's Caesar key, so an unthrottled
+  // loop drains the credits.
   const limit = rateLimit(clientIp(req));
   if (!limit.ok) {
     const retryAfterSeconds = limit.retryAfterSeconds ?? 60;

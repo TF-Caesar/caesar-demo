@@ -4,9 +4,9 @@ import { relativeTime } from './time';
 /**
  * Deterministic, evidence-grounded summarization for the research briefing.
  *
- * Caesar's anonymous read() returns content.text but usually NO structured
- * passages — so we score and extract sentences from the FULL read text
- * (citation.text), never relying on citation.passage alone.
+ * Caesar's read() can return content.text with NO structured passages, so we
+ * score and extract sentences from the FULL read text (citation.text), never
+ * relying on citation.passage alone.
  *
  * The snippet scorer is ported from caesar-verifier/lib/verify.ts (bestSnippet):
  * key terms drive overlap, "hard tokens" (numbers/dates/acronyms) are weighted.

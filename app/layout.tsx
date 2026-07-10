@@ -8,7 +8,7 @@ import { ogImageUrl } from '../lib/og';
 const geist = Geist({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-geist', display: 'swap' });
 const geistMono = Geist_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-geist-mono', display: 'swap' });
 
-const TITLE = 'Caesar Demos: free search, four ways';
+const TITLE = 'Caesar Demos: live search, four ways';
 const DESCRIPTION =
   'Four free, no-signup demos of Caesar search: verify a claim, research anything with receipts, watch a topic for what is new, and find a product to buy it. Powered by Caesar search.';
 const HUB_OG_IMAGE = ogImageUrl('hub');

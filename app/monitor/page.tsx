@@ -52,8 +52,8 @@ export default function MonitorPage() {
             className="underline decoration-hairline underline-offset-4 transition-colors duration-editorial ease-editorial hover:text-ink hover:decoration-ink"
           >
             Caesar search
-          </a>{' '}
-          — free, no signup. A freshness radar, not a model&rsquo;s memory.
+          </a>
+          . Free to use, no signup: a freshness radar, not a model&rsquo;s memory.
         </p>
       </footer>
     </main>

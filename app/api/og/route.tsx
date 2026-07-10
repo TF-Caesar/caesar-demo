@@ -102,7 +102,7 @@ export function GET(req: Request): Response {
           }}
         >
           <div style={{ display: 'flex', fontSize: 27, color: INK_2 }}>
-            free live web search · no signup
+            free demos · no signup · live web search
           </div>
           <div style={{ display: 'flex', fontSize: 27, color: INK_2 }}>caesar-demo.fly.dev</div>
         </div>

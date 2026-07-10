@@ -32,7 +32,8 @@ export interface ResearchResult {
  * deterministically extract the strongest sentences (grounded in citation.text,
  * never passage alone — see lib/research.ts) and a numbered source list.
  *
- * Keyless by default. If demo mode is on (VERIFIER_DEMO=1) OR anything throws,
+ * Needs a server-side Caesar key (CAESAR_SEARCH_API_KEY). If demo mode is on
+ * (VERIFIER_DEMO=1) OR anything throws (including an unconfigured key),
  * returns a baked demo briefing (degraded:true) so the hosted demo never blanks.
  */
 export async function runResearch(
@@ -56,7 +57,7 @@ export async function runResearch(
   }
 }
 
-/** Shown when the free tier is busy (and in VERIFIER_DEMO mode). */
+/** Shown when live search is unavailable (and in VERIFIER_DEMO mode). */
 function demoResearch(question: string): ResearchResult {
   // Demo capture times are relative so the fallback never displays months-old
   // "freshness": the briefing is canned, and pretending it was captured long

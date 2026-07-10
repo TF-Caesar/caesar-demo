@@ -104,7 +104,7 @@ function ClaimInputPanel() {
       if (!res.ok || !res.body) {
         setError(
           res.status === 429
-            ? 'Checks are coming in faster than the free tier allows. Wait a moment and try again.'
+            ? 'Checks are coming in faster than this demo allows. Wait a moment and try again.'
             : res.status === 413
               ? 'That input is too large. Paste a shorter passage or a single URL.'
               : 'Something went wrong on our side. Try again in a moment.',
@@ -225,7 +225,7 @@ function ClaimInputPanel() {
         <div className="mt-7 inline-flex items-center gap-2 rounded-pill bg-surface px-3 py-1.5 text-[12px] text-ink-2">
           <span className="h-1.5 w-1.5 rounded-full bg-sage" aria-hidden="true" />
           {isDemoFixture
-            ? 'Showing a cached example: the free tier is busy right now.'
+            ? 'Live search is unavailable right now: showing a cached example.'
             : 'Some claims could not be checked right now. Showing the ones that completed.'}
         </div>
       )}

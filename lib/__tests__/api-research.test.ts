@@ -29,7 +29,7 @@ describe('runResearch', () => {
     expect(out.summary.map((s) => s.text).join(' ')).toMatch(/Argentina/);
     expect(out.sources).toHaveLength(1);
     // The regression: passing minScore made the shared client drop unscored
-    // results, so a fine API response rendered as "free tier is busy".
+    // results, so a fine API response rendered as the cached-example fallback.
     expect(searchAndRead.mock.calls[0][1]).not.toHaveProperty('minScore');
   });
 

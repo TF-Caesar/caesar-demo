@@ -2,7 +2,7 @@
 
 Four free, no-signup demos of [Caesar](https://trycaesar.com) search, hosted on **one** deployment. Each shows the same idea from a different angle: the answer is a **live source, captured at a moment** — not a model's memory.
 
-Free. No signup. No API key. Powered by Caesar search.
+The hosted demos are free to use, no signup: the server holds the Caesar API key. Powered by Caesar search.
 
 ## The four demos
 
@@ -13,22 +13,22 @@ Free. No signup. No API key. Powered by Caesar search.
 
 The hub lives at `/` and links to all four.
 
-## Run it locally (zero setup)
+## Run it locally
 
 ```bash
 git clone https://github.com/TF-Caesar/caesar-demo
 cd caesar-demo
 npm install
+cp .env.example .env.local   # then add your CAESAR_SEARCH_API_KEY
 npm run dev
 ```
 
-No keys required — it runs on Caesar's free anonymous tier. Optional env:
+`CAESAR_SEARCH_API_KEY` is **required**: Caesar's API is keyed. Get a key at [trycaesar.com](https://trycaesar.com) (new accounts include $1,000 in credits). Deploying? Set it as a secret, e.g. `fly secrets set CAESAR_SEARCH_API_KEY=<your-key>` for the Fly deployment. Optional env:
 
-- `CAESAR_SEARCH_API_KEY` — higher rate limits.
 - `CLAIMS_LLM_KEY` — an Anthropic key for sharper claim extraction in the Verifier (off by default; deterministic otherwise).
 - `VERIFIER_DEMO=1` — force the cached demo responses across all four demos (offline showcase / screenshots).
 
-Every route has a graceful demo fallback, so the hosted demos never error under throttling.
+Every route has a graceful demo fallback, so the hosted demos never error under throttling or a missing key.
 
 ## How it works
 
