@@ -10,7 +10,7 @@ const geistMono = Geist_Mono({ subsets: ['latin'], weight: ['400', '500'], varia
 
 const TITLE = 'Caesar Demos: live search, four ways';
 const DESCRIPTION =
-  'Four free, no-signup demos of Caesar search: verify a claim, research anything with receipts, watch a topic for what is new, and find a product to buy it. Powered by Caesar search.';
+  'Four live demos of Caesar search: verify a claim, research anything with receipts, watch a topic for what is new, and find a product to buy it. Free to try, no signup: this site brings the API key.';
 const HUB_OG_IMAGE = ogImageUrl('hub');
 
 export const metadata: Metadata = {

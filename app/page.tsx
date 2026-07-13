@@ -60,7 +60,7 @@ export default function Hub() {
         </div>
 
         <p className="mt-5 max-w-[46ch] text-[1.0625rem] leading-relaxed text-ink-2">
-          Four free, no-signup demos of{' '}
+          Four live demos of{' '}
           <a
             href="https://trycaesar.com"
             target="_blank"
@@ -70,6 +70,7 @@ export default function Hub() {
             Caesar
           </a>{' '}
           search: verify a claim, research anything, watch a topic, find it to buy it.
+          Free to try, no signup: this site brings the API key.
         </p>
       </section>
 
